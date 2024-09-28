@@ -159,6 +159,7 @@ public class MassSpringSystemDemo : Game
                 var newParticle = new MassParticle
                 {
                     Position = new Vector3(i * Step, 0, -j * Step),
+                    PrevPosition = new Vector3(i * Step, 0, -j * Step),
                     Mass = Mass,
                     Pinned = i == 0 && j == 0 ||
                              i == 0 && j == Height - 1 ||
@@ -190,42 +191,37 @@ public class MassSpringSystemDemo : Game
 
                 _massSpringSystem.Springs.Add(new Spring(mass1, mass2)
                 {
-                    //RestLength = (mass2.Position - mass1.Position).Length(),
-                    RestLength = RestLength,
+                    RestLength = (mass2.Position - mass1.Position).Length(),
                     Stiffness = Stiffness,
                     Damping = Damping
                 });
 
                 _massSpringSystem.Springs.Add(new Spring(mass1, mass3)
                 {
-                    //RestLength = (mass3.Position - mass1.Position).Length(),
-                    RestLength = RestLength,
+                    RestLength = (mass3.Position - mass1.Position).Length(),
                     Stiffness = Stiffness,
                     Damping = Damping
                 });
 
                 _massSpringSystem.Springs.Add(new Spring(mass1, mass4)
                 {
-                    //RestLength = (mass4.Position - mass1.Position).Length(),
-                    RestLength = RestLength,
+                    RestLength = (mass4.Position - mass1.Position).Length(),
                     Stiffness = Stiffness,
                     Damping = Damping
                 });
 
-                //_massSpringSystem.Springs.Add(new Spring(mass2, mass3)
-                //{
-                //    //RestLength = (mass3.Position - mass2.Position).Length(),
-                //    RestLength = RestLength,
-                //    Stiffness = Stiffness,
-                //    Damping = Damping
-                //});
+                _massSpringSystem.Springs.Add(new Spring(mass2, mass3)
+                {
+                    RestLength = (mass3.Position - mass2.Position).Length(),
+                    Stiffness = Stiffness,
+                    Damping = Damping
+                });
 
                 if (i == Width - 2)
                 {
                     _massSpringSystem.Springs.Add(new Spring(mass3, mass4)
                     {
-                        //RestLength = (mass4.Position - mass3.Position).Length(),
-                        RestLength = RestLength,
+                        RestLength = (mass4.Position - mass3.Position).Length(),
                         Stiffness = Stiffness,
                         Damping = Damping
                     });
@@ -235,8 +231,7 @@ public class MassSpringSystemDemo : Game
                 {
                     _massSpringSystem.Springs.Add(new Spring(mass2, mass4)
                     {
-                        //RestLength = (mass4.Position - mass2.Position).Length(),
-                        RestLength = RestLength,
+                        RestLength = (mass4.Position - mass2.Position).Length(),
                         Stiffness = Stiffness,
                         Damping = Damping
                     });
@@ -287,10 +282,9 @@ public class MassSpringSystemDemo : Game
         }
     }
 
-    private void SphereConstraints(Vector3 oldVelocity,
-        Vector3 oldPosition,
-        ref Vector3 newVelocity,
+    private void SphereConstraints(Vector3 oldPosition,
         ref Vector3 newPosition,
+        Vector3 velocity,
         float timeStep)
     {
         var sphereCenterDirection = newPosition - _sphereCenter;
@@ -299,13 +293,13 @@ public class MassSpringSystemDemo : Game
 
         sphereCenterDirection.Normalize();
 
-        var vDotN = Vector3.Dot(newVelocity, sphereCenterDirection);
+        var vDotN = Vector3.Dot(velocity, sphereCenterDirection);
 
         if (vDotN > 0) return;
 
         var vNormal = vDotN * sphereCenterDirection;
 
-        newVelocity -= vNormal;
+        var newVelocity = velocity - vNormal;
 
         var deltaPosition = timeStep * newVelocity;
         newPosition = oldPosition + deltaPosition;

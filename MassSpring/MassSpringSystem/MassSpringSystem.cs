@@ -14,9 +14,11 @@ public class MassSpringSystem
     {
         AddGravity();
 
+        UpdateMassParticles(timeStep);
+
         UpdateSprings();
 
-        UpdateMassParticles(timeStep);
+        UpdateAcceleration();
     }
 
     private void AddGravity()
@@ -24,6 +26,14 @@ public class MassSpringSystem
         foreach (var massParticle in MassParticles)
         {
             massParticle.TotalForce = massParticle.Mass * _gravitationalAcceleration;
+        }
+    }
+
+    private void UpdateAcceleration()
+    {
+        foreach (var massParticle in MassParticles)
+        {
+            massParticle.UpdateAcceleration();
         }
     }
 
