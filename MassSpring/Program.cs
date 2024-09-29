@@ -1,3 +1,3 @@
 ﻿
-using var game = new MassSpring.MassSpringSystemDemo();
+using var game = new MassSpringSystemSimulation.MassSpringSystemDemo();
 game.Run();

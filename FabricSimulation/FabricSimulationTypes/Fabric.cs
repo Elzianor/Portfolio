@@ -1,24 +1,25 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace Beryllium.Physics.MassSpringSystem;
+namespace Beryllium.Physics;
 
-public class MassSpringSystem
+public class Fabric
 {
     private readonly Vector3 _gravitationalAcceleration = new (0, -9.8f, 0);
 
     public List<MassParticle> MassParticles { get; } = [];
-    public List<Spring> Springs { get; set; } = [];
+    public List<FabricThread> FabricThreads { get; set; } = [];
 
     public void Update(float timeStep)
     {
-        AddGravity();
+        //AddGravity();
 
         UpdateMassParticles(timeStep);
 
-        UpdateSprings();
+        UpdateFabricThreads();
 
-        UpdateAcceleration();
+        //UpdateAcceleration();
     }
 
     private void AddGravity()
@@ -37,19 +38,27 @@ public class MassSpringSystem
         }
     }
 
-    private void UpdateSprings()
+    private void UpdateFabricThreads()
     {
-        foreach (var spring in Springs)
+        for (var i = 0; i < 2; i++)
         {
-            spring.Update();
+            /*Parallel.ForEach(FabricThreads, fabricThread =>
+            {
+                fabricThread.Update();
+            });*/
+
+            foreach (var fabricThread in FabricThreads)
+            {
+                fabricThread.Update();
+            }
         }
     }
 
     private void UpdateMassParticles(float timeStep)
     {
-        foreach (var massParticle in MassParticles)
+        Parallel.ForEach(MassParticles, massParticle =>
         {
             massParticle.Update(timeStep);
-        }
+        });
     }
 }

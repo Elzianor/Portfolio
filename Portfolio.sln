@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35208.52
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassSpring", "MassSpring\MassSpring.csproj", "{1FDA1124-53EC-4473-A8ED-DCABECC700EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MassSpringSystemSimulation", "MassSpring\MassSpringSystemSimulation.csproj", "{1FDA1124-53EC-4473-A8ED-DCABECC700EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabricSimulation", "FabricSimulation\FabricSimulation.csproj", "{609A8027-C6DF-4FC3-802E-72A788EA4CAB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{1FDA1124-53EC-4473-A8ED-DCABECC700EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FDA1124-53EC-4473-A8ED-DCABECC700EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FDA1124-53EC-4473-A8ED-DCABECC700EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

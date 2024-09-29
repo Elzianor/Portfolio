@@ -1,29 +1,25 @@
 ﻿using Beryllium.MonoInput.KeyboardInput;
 using Beryllium.MonoInput.MouseInput;
-using Beryllium.Physics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using Beryllium.Physics;
 
-namespace MassSpringSystemSimulation;
+namespace FabricSimulation;
 
-public class MassSpringSystemDemo : Game
+public class FabricSimulationDemo : Game
 {
     private const int Width = 50;
     private const int Height = 50;
-    private const float Step = 0.5f;
+    private const float Step = 0.1f;
 
-    private const float Mass = 0.5f;
-
-    private const float RestLength = Step;
-    private const float Stiffness = 800;
-    private const float Damping = 15;
+    private const float Mass = 0.1f;
 
     private const float AnimationSpeedMultiplier = 1.0f / 1.5f;
 
-    private readonly Vector3 _sphereCenter = new(13.5f, -10, -13.5f);
-    private const float SphereRadius = 8;
+    private readonly Vector3 _sphereCenter = new(3.0f, -1.5f, -3.0f);
+    private const float SphereRadius = 1.0f;
 
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
@@ -42,7 +38,7 @@ public class MassSpringSystemDemo : Game
     private VertexPositionColor[] _vertices;
     private VertexBuffer _vertexBuffer;
 
-    private MassSpringSystem _massSpringSystem;
+    private Fabric _fabric;
 
     private bool _simulationRunning;
 
@@ -53,7 +49,7 @@ public class MassSpringSystemDemo : Game
     private MassParticle _rightBottom;
     private MassParticle _rightTop;
 
-    public MassSpringSystemDemo()
+    public FabricSimulationDemo()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
@@ -72,10 +68,10 @@ public class MassSpringSystemDemo : Game
         // TODO: Add your initialization logic here
 
         _random = new Random();
-        _massSpringSystem = new MassSpringSystem();
+        _fabric = new Fabric();
 
         SetupMassParticles();
-        SetupSprings();
+        SetupFabricThreads();
 
         InitializeVertices();
 
@@ -112,7 +108,7 @@ public class MassSpringSystemDemo : Game
 
         if (_simulationRunning)
         {
-            _massSpringSystem.Update((float)gameTime.ElapsedGameTime.TotalSeconds * AnimationSpeedMultiplier);
+            _fabric.Update((float)gameTime.ElapsedGameTime.TotalSeconds * AnimationSpeedMultiplier);
             UpdateVertices();
         }
 
@@ -132,7 +128,7 @@ public class MassSpringSystemDemo : Game
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList,
                 _vertices,
                 0,
-                _massSpringSystem.Springs.Count);
+                _fabric.FabricThreads.Count);
         }
 
         _spriteBatch.Begin();
@@ -173,67 +169,55 @@ public class MassSpringSystemDemo : Game
                 if (i == Width - 1 && j == 0) _rightBottom = newParticle;
                 if (i == Width - 1 && j == Height - 1) _rightTop = newParticle;
 
-                _massSpringSystem.MassParticles.Add(newParticle);
+                _fabric.MassParticles.Add(newParticle);
             }
         }
     }
 
-    private void SetupSprings()
+    private void SetupFabricThreads()
     {
         for (var i = 0; i < Width - 1; i++)
         {
             for (var j = 0; j < Height - 1; j++)
             {
-                var mass1 = _massSpringSystem.MassParticles[i * Width + j];
-                var mass2 = _massSpringSystem.MassParticles[i * Width + j + 1];
-                var mass3 = _massSpringSystem.MassParticles[(i + 1) * Width + j];
-                var mass4 = _massSpringSystem.MassParticles[(i + 1) * Width + j + 1];
+                var mass1 = _fabric.MassParticles[i * Width + j];
+                var mass2 = _fabric.MassParticles[i * Width + j + 1];
+                var mass3 = _fabric.MassParticles[(i + 1) * Width + j];
+                var mass4 = _fabric.MassParticles[(i + 1) * Width + j + 1];
 
-                _massSpringSystem.Springs.Add(new Spring(mass1, mass2)
+                _fabric.FabricThreads.Add(new FabricThread(mass1, mass2)
                 {
-                    RestLength = (mass2.Position - mass1.Position).Length(),
-                    Stiffness = Stiffness,
-                    Damping = Damping
+                    Length = (mass2.Position - mass1.Position).Length()
                 });
 
-                _massSpringSystem.Springs.Add(new Spring(mass1, mass3)
+                _fabric.FabricThreads.Add(new FabricThread(mass1, mass3)
                 {
-                    RestLength = (mass3.Position - mass1.Position).Length(),
-                    Stiffness = Stiffness,
-                    Damping = Damping
+                    Length = (mass3.Position - mass1.Position).Length()
                 });
 
-                _massSpringSystem.Springs.Add(new Spring(mass1, mass4)
+                _fabric.FabricThreads.Add(new FabricThread(mass1, mass4)
                 {
-                    RestLength = (mass4.Position - mass1.Position).Length(),
-                    Stiffness = Stiffness,
-                    Damping = Damping
+                    Length = (mass4.Position - mass1.Position).Length()
                 });
 
-                _massSpringSystem.Springs.Add(new Spring(mass2, mass3)
+                _fabric.FabricThreads.Add(new FabricThread(mass2, mass3)
                 {
-                    RestLength = (mass3.Position - mass2.Position).Length(),
-                    Stiffness = Stiffness,
-                    Damping = Damping
+                    Length = (mass3.Position - mass2.Position).Length()
                 });
 
                 if (i == Width - 2)
                 {
-                    _massSpringSystem.Springs.Add(new Spring(mass3, mass4)
+                    _fabric.FabricThreads.Add(new FabricThread(mass3, mass4)
                     {
-                        RestLength = (mass4.Position - mass3.Position).Length(),
-                        Stiffness = Stiffness,
-                        Damping = Damping
+                        Length = (mass4.Position - mass3.Position).Length()
                     });
                 }
 
                 if (j == Height - 2)
                 {
-                    _massSpringSystem.Springs.Add(new Spring(mass2, mass4)
+                    _fabric.FabricThreads.Add(new FabricThread(mass2, mass4)
                     {
-                        RestLength = (mass4.Position - mass2.Position).Length(),
-                        Stiffness = Stiffness,
-                        Damping = Damping
+                        Length = (mass4.Position - mass2.Position).Length()
                     });
                 }
             }
@@ -242,11 +226,11 @@ public class MassSpringSystemDemo : Game
 
     private void InitializeVertices()
     {
-        _vertices = new VertexPositionColor[_massSpringSystem.Springs.Count * 2];
+        _vertices = new VertexPositionColor[_fabric.FabricThreads.Count * 2];
 
         var index = 0;
 
-        foreach (var spring in _massSpringSystem.Springs)
+        foreach (var fabricThread in _fabric.FabricThreads)
         {
             var r = (float)_random.NextDouble();
             var g = (float)_random.NextDouble();
@@ -254,7 +238,7 @@ public class MassSpringSystemDemo : Game
 
             var color = new Color(r, g, b);
 
-            _vertices[index++] = new VertexPositionColor(spring.Mass1.Position, color);
+            _vertices[index++] = new VertexPositionColor(fabricThread.Mass1.Position, color);
 
             r = (float)_random.NextDouble();
             g = (float)_random.NextDouble();
@@ -262,7 +246,7 @@ public class MassSpringSystemDemo : Game
 
             color = new Color(r, g, b);
 
-            _vertices[index++] = new VertexPositionColor(spring.Mass2.Position, color);
+            _vertices[index++] = new VertexPositionColor(fabricThread.Mass2.Position, color);
         }
 
         _vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor),
@@ -275,10 +259,10 @@ public class MassSpringSystemDemo : Game
     {
         var index = 0;
 
-        foreach (var spring in _massSpringSystem.Springs)
+        foreach (var fabricThread in _fabric.FabricThreads)
         {
-            _vertices[index++].Position = spring.Mass1.Position;
-            _vertices[index++].Position = spring.Mass2.Position;
+            _vertices[index++].Position = fabricThread.Mass1.Position;
+            _vertices[index++].Position = fabricThread.Mass2.Position;
         }
     }
 
@@ -341,10 +325,10 @@ public class MassSpringSystemDemo : Game
         {
             _simulationRunning = false;
 
-            _massSpringSystem = new MassSpringSystem();
+            _fabric = new Fabric();
 
             SetupMassParticles();
-            SetupSprings();
+            SetupFabricThreads();
 
             InitializeVertices();
         }

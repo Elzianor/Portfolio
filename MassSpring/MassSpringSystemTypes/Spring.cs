@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Beryllium.Physics.MassSpringSystem;
+namespace Beryllium.Physics;
 
 public class Spring(MassParticle mass1, MassParticle mass2)
 {

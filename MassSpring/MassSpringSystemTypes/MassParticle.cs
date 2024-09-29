@@ -1,6 +1,6 @@
 ﻿using Vector3 = Microsoft.Xna.Framework.Vector3;
 
-namespace Beryllium.Physics.MassSpringSystem;
+namespace Beryllium.Physics;
 
 public class MassParticle
 {
