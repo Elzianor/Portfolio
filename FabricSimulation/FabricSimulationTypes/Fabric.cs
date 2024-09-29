@@ -13,29 +13,31 @@ public class Fabric
 
     public void Update(float timeStep)
     {
-        //AddGravity();
+        AddGravityForce();
 
         UpdateMassParticles(timeStep);
 
         UpdateFabricThreads();
 
-        //UpdateAcceleration();
+        UpdateAirResistance();
+
+        UpdateAcceleration();
     }
 
-    private void AddGravity()
+    private void AddGravityForce()
     {
-        foreach (var massParticle in MassParticles)
+        Parallel.ForEach(MassParticles, massParticle =>
         {
             massParticle.TotalForce = massParticle.Mass * _gravitationalAcceleration;
-        }
+        });
     }
 
     private void UpdateAcceleration()
     {
-        foreach (var massParticle in MassParticles)
+        Parallel.ForEach(MassParticles, massParticle =>
         {
             massParticle.UpdateAcceleration();
-        }
+        });
     }
 
     private void UpdateFabricThreads()
@@ -60,5 +62,10 @@ public class Fabric
         {
             massParticle.Update(timeStep);
         });
+    }
+
+    private void UpdateAirResistance()
+    {
+        Parallel.ForEach(MassParticles, Air.Resist);
     }
 }

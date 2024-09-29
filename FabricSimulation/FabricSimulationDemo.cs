@@ -1,10 +1,10 @@
 ﻿using Beryllium.MonoInput.KeyboardInput;
 using Beryllium.MonoInput.MouseInput;
+using Beryllium.Physics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using Beryllium.Physics;
 
 namespace FabricSimulation;
 
@@ -14,7 +14,7 @@ public class FabricSimulationDemo : Game
     private const int Height = 50;
     private const float Step = 0.1f;
 
-    private const float Mass = 0.1f;
+    private const float Mass = 0.01f;
 
     private const float AnimationSpeedMultiplier = 1.0f / 1.5f;
 
@@ -55,6 +55,7 @@ public class FabricSimulationDemo : Game
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         _graphics.GraphicsProfile = GraphicsProfile.HiDef;
+        //_graphics.IsFullScreen = true;
         Window.AllowUserResizing = true;
         _graphics.PreferredBackBufferWidth = 1600;
         _graphics.PreferredBackBufferHeight = 950;
@@ -84,6 +85,10 @@ public class FabricSimulationDemo : Game
             Projection = _projectionMatrix,
             VertexColorEnabled = true
         };
+
+        /*_graphics.PreferredBackBufferWidth = _graphics.GraphicsDevice.DisplayMode.Width;
+        _graphics.PreferredBackBufferHeight = _graphics.GraphicsDevice.DisplayMode.Height;
+        _graphics.ApplyChanges();*/
 
         base.Initialize();
     }
@@ -164,6 +169,8 @@ public class FabricSimulationDemo : Game
                     AdditionalConstraints = SphereConstraints
                 };
 
+                //if (i == 0 && j % 7 == 0) newParticle.Pinned = true;
+
                 if (i == 0 && j == 0) _leftBottom = newParticle;
                 if (i == 0 && j == Height - 1) _leftTop = newParticle;
                 if (i == Width - 1 && j == 0) _rightBottom = newParticle;
@@ -195,15 +202,15 @@ public class FabricSimulationDemo : Game
                     Length = (mass3.Position - mass1.Position).Length()
                 });
 
-                _fabric.FabricThreads.Add(new FabricThread(mass1, mass4)
-                {
-                    Length = (mass4.Position - mass1.Position).Length()
-                });
+                //_fabric.FabricThreads.Add(new FabricThread(mass1, mass4)
+                //{
+                //    Length = (mass4.Position - mass1.Position).Length()
+                //});
 
-                _fabric.FabricThreads.Add(new FabricThread(mass2, mass3)
-                {
-                    Length = (mass3.Position - mass2.Position).Length()
-                });
+                //_fabric.FabricThreads.Add(new FabricThread(mass2, mass3)
+                //{
+                //    Length = (mass3.Position - mass2.Position).Length()
+                //});
 
                 if (i == Width - 2)
                 {

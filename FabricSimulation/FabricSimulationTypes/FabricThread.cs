@@ -1,13 +1,22 @@
-﻿using BMath = Beryllium.Mathematics.Mathematics;
+﻿using Microsoft.Xna.Framework;
+using BMath = Beryllium.Mathematics.Mathematics;
 
 namespace Beryllium.Physics;
 
-public class FabricThread(MassParticle mass1, MassParticle mass2)
+public class FabricThread
 {
-    public MassParticle Mass1 { get; } = mass1;
-    public MassParticle Mass2 { get; } = mass2;
+    public MassParticle Mass1 { get; }
+    public MassParticle Mass2 { get; }
     public float Length { get; set; }
     public bool Disabled { get; set; }
+
+    public FabricThread(MassParticle mass1, MassParticle mass2)
+    {
+        Mass1 = mass1;
+        Mass2 = mass2;
+        Mass1.AddFabricThread(this);
+        Mass2.AddFabricThread(this);
+    }
 
     public void Update()
     {
