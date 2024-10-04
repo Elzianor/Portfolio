@@ -5,7 +5,9 @@ VisualStudioVersion = 17.11.35208.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MassSpringSystemSimulation", "MassSpring\MassSpringSystemSimulation.csproj", "{1FDA1124-53EC-4473-A8ED-DCABECC700EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FabricSimulation", "FabricSimulation\FabricSimulation.csproj", "{609A8027-C6DF-4FC3-802E-72A788EA4CAB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabricSimulation", "FabricSimulation\FabricSimulation.csproj", "{609A8027-C6DF-4FC3-802E-72A788EA4CAB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlinnPhongMaterialModel", "BlinnPhongMaterialModel\BlinnPhongMaterialModel.csproj", "{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{609A8027-C6DF-4FC3-802E-72A788EA4CAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
