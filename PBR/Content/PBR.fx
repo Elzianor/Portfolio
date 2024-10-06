@@ -87,10 +87,8 @@ struct VertexShaderOutput
 {
     float4 Position : SV_POSITION;
     float2 TextureCoordinates : TEXCOORD0;
-    float3 Normal : TEXCOORD1;
-    float3 Tangent : TEXCOORD2;
-    float3 Bitangent : TEXCOORD3;
-    float3 WorldViewPosition : TEXCOORD4;
+    float3 WorldViewPosition : TEXCOORD1;
+    float3x3 TBN : TEXCOORD2;
 };
 
 struct MaterialProperties
@@ -190,25 +188,23 @@ VertexShaderOutput VS(VertexShaderInput input)
     float3 bitangent = cross(normal, tangent);
 
     output.Position = mul(input.Position, WorldViewProjection);
-    output.WorldViewPosition = mul(input.Position, WorldView).xyz;
     output.TextureCoordinates = input.TextureCoordinates;
-    output.Tangent = tangent;
-    output.Bitangent = bitangent;
-    output.Normal = normal;
+    output.WorldViewPosition = mul(input.Position, WorldView).xyz;
+    output.TBN = float3x3(tangent, bitangent, normal);
 
     return output;
 }
 
 float4 PS(VertexShaderOutput input) : SV_TARGET0
 {
-    float3x3 tbn = float3x3(input.Tangent, input.Bitangent, input.Normal);
+    float3x3 tbn = input.TBN;
 
     float3 normal = tex2D(NormalMapTextureSampler, input.TextureCoordinates);
     normal = normal * 2.0 - 1.0;
     normal.y = -normal.y;
     normal = normalize(mul(normal, tbn));
 
-    float3 viewDirection = -normalize(input.WorldViewPosition.xyz);
+    float3 viewDirection = -normalize(input.WorldViewPosition);
     float3 lightDirection = -normalize(LightDirection);
     float3 halfDirection = normalize(viewDirection + lightDirection);
 
