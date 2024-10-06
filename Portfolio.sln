@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MassSpringSystemSimulation"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabricSimulation", "FabricSimulation\FabricSimulation.csproj", "{609A8027-C6DF-4FC3-802E-72A788EA4CAB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlinnPhongMaterialModel", "BlinnPhongMaterialModel\BlinnPhongMaterialModel.csproj", "{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PBR", "PBR\PBR.csproj", "{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
