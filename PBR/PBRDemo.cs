@@ -29,7 +29,7 @@ public class PBRDemo : Game
 
     private Sphere _sphere;
 
-    private VertexPositionNormalTexture[] _vertices;
+    private VertexPositionNormalTangentTexture[] _vertices;
     private VertexBuffer _vertexBuffer;
 
     private float _lightDirectionAngle;
@@ -106,7 +106,7 @@ public class PBRDemo : Game
             (float)Math.Sin(_lightDirectionAngle)));
 
         _pbrEffect.Parameters["DiffuseMapTexture"].SetValue(_diffuseTexture);
-        //_pbrEffect.Parameters["NormalMapTexture"].SetValue(_normalTexture);
+        _pbrEffect.Parameters["NormalMapTexture"].SetValue(_normalTexture);
         _pbrEffect.Parameters["RoughnessMapTexture"].SetValue(_roughnessTexture);
         _pbrEffect.Parameters["MetallicMapTexture"].SetValue(_metallicTexture);
         _pbrEffect.Parameters["AoMapTexture"].SetValue(_aoTexture);
@@ -150,18 +150,9 @@ public class PBRDemo : Game
 
     private void InitializeVertices()
     {
-        //_vertices = _sphere.Vertices;
+        _vertices = _sphere.Vertices;
 
-        var vertices = new List<VertexPositionNormalTexture>();
-
-        foreach (var vertex in _sphere.Vertices)
-        {
-            vertices.Add(new VertexPositionNormalTexture(vertex.Position, vertex.Normal, vertex.TextureCoordinate));
-        }
-
-        _vertices = vertices.ToArray();
-
-        _vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture),
+        _vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTangentTexture),
             _vertices.Length, BufferUsage.None);
 
         _vertexBuffer.SetData(_vertices);

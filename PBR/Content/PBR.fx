@@ -79,6 +79,7 @@ struct VertexShaderInput
 {
     float4 Position : POSITION0;
     float3 Normal : NORMAL0;
+    float3 Tangent : TANGENT0;
     float2 TextureCoordinates : TEXCOORD0;
 };
 
@@ -87,7 +88,9 @@ struct VertexShaderOutput
     float4 Position : SV_POSITION;
     float2 TextureCoordinates : TEXCOORD0;
     float3 Normal : TEXCOORD1;
-    float3 WorldViewPosition : TEXCOORD2;
+    float3 Tangent : TEXCOORD2;
+    float3 Bitangent : TEXCOORD3;
+    float3 WorldViewPosition : TEXCOORD4;
 };
 
 struct MaterialProperties
@@ -180,17 +183,17 @@ VertexShaderOutput VS(VertexShaderInput input)
     VertexShaderOutput output;
 
     float3 normal = mul(input.Normal, WorldViewInverseTranspose);
-    //float3 tangent = mul(input.Tangent, WorldViewInverseTranspose);
+    float3 tangent = mul(input.Tangent, WorldViewInverseTranspose);
 
-    //tangent = normalize(tangent - dot(tangent, normal) * normal);
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
 
-    //float3 bitangent = cross(normal, tangent);
+    float3 bitangent = cross(normal, tangent);
 
     output.Position = mul(input.Position, WorldViewProjection);
     output.WorldViewPosition = mul(input.Position, WorldView).xyz;
     output.TextureCoordinates = input.TextureCoordinates;
-    //output.Tangent = tangent;
-    //output.Bitangent = bitangent;
+    output.Tangent = tangent;
+    output.Bitangent = bitangent;
     output.Normal = normal;
 
     return output;
@@ -198,13 +201,12 @@ VertexShaderOutput VS(VertexShaderInput input)
 
 float4 PS(VertexShaderOutput input) : SV_TARGET0
 {
-    //float3x3 tbn = float3x3(input.Tangent, input.Bitangent, input.Normal);
+    float3x3 tbn = float3x3(input.Tangent, input.Bitangent, input.Normal);
 
     float3 normal = tex2D(NormalMapTextureSampler, input.TextureCoordinates);
     normal = normal * 2.0 - 1.0;
-    //normal = normalize(mul(normal, tbn));
-
-    normal = input.Normal;
+    normal.y = -normal.y;
+    normal = normalize(mul(normal, tbn));
 
     float3 viewDirection = -normalize(input.WorldViewPosition.xyz);
     float3 lightDirection = -normalize(LightDirection);
