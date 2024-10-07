@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using BMath = Beryllium.Mathematics.Mathematics;
+﻿using BMath = Beryllium.Mathematics.Mathematics;
 
 namespace Beryllium.Physics;
 
