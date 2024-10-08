@@ -14,6 +14,7 @@ namespace PBR;
 
 public class PBRDemo : Game
 {
+    private bool _showOnlyBlurPart;
     private bool _applyBlur;
     private int _blurPasses = 10;
 
@@ -48,8 +49,8 @@ public class PBRDemo : Game
         IsMouseVisible = true;
         _graphics.GraphicsProfile = GraphicsProfile.HiDef;
         Window.AllowUserResizing = false;
-        _graphics.PreferredBackBufferWidth = 1600;
-        _graphics.PreferredBackBufferHeight = 950;
+        _graphics.PreferredBackBufferWidth = 1400;
+        _graphics.PreferredBackBufferHeight = 780;
         _graphics.SynchronizeWithVerticalRetrace = false;
         IsFixedTimeStep = false;
         _graphics.ApplyChanges();
@@ -98,7 +99,10 @@ public class PBRDemo : Game
         _blurEffectManager = new BlurEffectManager(Content, "Effects/Blur");
         _mergeBlurEffectManager = new MergeBlurEffectManager(Content, "Effects/MergeBlur");
 
-        const string folderName = "Bricks";
+        //const string folderName = "Bricks";
+        //const string folderName = "RustyMetal";
+        //const string folderName = "PolishedWood";
+        const string folderName = "LavaRock";
 
         _material = new Material(Content,
             $"Material/{folderName}/Diffuse",
@@ -106,7 +110,9 @@ public class PBRDemo : Game
             $"Material/{folderName}/Roughness",
             $"Material/{folderName}/Metallic",
             $"Material/{folderName}/AO",
-            0.04f);
+            $"Material/{folderName}/Emissive",
+            0.04f,
+            true);
 
         var cameraPosition = new Vector3(0, 5, 5);
         var cameraLookAt = Vector3.Zero;
@@ -154,7 +160,7 @@ public class PBRDemo : Game
         if (_applyBlur)
         {
             BlurPass();
-            MergePass();
+            if (!_showOnlyBlurPart) MergePass();
         }
         else
         {
@@ -224,6 +230,14 @@ public class PBRDemo : Game
         }
 
         _blurRenderTarget2 = destinationRenderTarget;
+
+        if (_showOnlyBlurPart)
+        {
+            GraphicsDevice.SetRenderTarget(null);
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(_blurRenderTarget2, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+        }
     }
 
     private void MergePass()
@@ -259,6 +273,8 @@ public class PBRDemo : Game
         if (KeyboardManager.IsKeyPressed(Keys.W)) _wireFrameManager.ToggleWireFrame();
 
         // Blur
+        if (KeyboardManager.IsKeyPressed(Keys.Q)) _showOnlyBlurPart = !_showOnlyBlurPart;
+
         if (KeyboardManager.IsKeyPressed(Keys.B)) _applyBlur = !_applyBlur;
 
         if (KeyboardManager.IsKeyPressed(Keys.V))

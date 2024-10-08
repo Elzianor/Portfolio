@@ -42,13 +42,14 @@ VertexShaderOutput VS(VertexShaderInput input)
 
 float4 PS(VertexShaderOutput input) : SV_TARGET0
 {
-    float3 mainColor = tex2D(MainSceneSampler, input.TextureCoordinates).rgb;
+    float4 color = tex2D(MainSceneSampler, input.TextureCoordinates);
+    float3 mainColor = color.rgb;
     float3 blurColor = tex2D(BlurSampler, input.TextureCoordinates).rgb;
 
     // additive blending
     mainColor += blurColor;
 
-    float avg = (mainColor.r + mainColor.g + mainColor.b) / 3.0;
+    float avg = (blurColor.r + blurColor.g + blurColor.b) / 3.0;
 
     float exposure = 1.0;
     float gamma = lerp(1.0, 2.2, avg);

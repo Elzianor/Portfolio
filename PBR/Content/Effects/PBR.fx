@@ -19,9 +19,15 @@ cbuffer Lighting
     float3 LightColor;
 
     float3 AmbientColor;
+
+    bool UseSingleDiffuseColor;
+    float3 DiffuseColor;
+
+    bool UseSingleEmissiveColor;
     float3 EmissiveColor;
 
     float BaseReflectivity;
+    bool InvertGreenChannel;
 }
 
 cbuffer Textures
@@ -75,6 +81,16 @@ cbuffer Textures
         AddressU = Wrap;
         AddressV = Wrap;
     };
+    
+    texture EmissiveMapTexture;
+    sampler2D EmissiveMapTextureSampler = sampler_state
+    {
+        Texture = (EmissiveMapTexture);
+        MinFilter = Linear;
+        MagFilter = Linear;
+        AddressU = Wrap;
+        AddressV = Wrap;
+    };
 }
 
 // --- STRUCTURES ---
@@ -107,6 +123,8 @@ struct MaterialProperties
     float Roughness;
     float Metallic;
     float Ao;
+    float3 EmissiveColor;
+    float BaseReflectivity;
 };
 
 // --- FUNCTIONS ---
@@ -153,8 +171,9 @@ float3 F(float3 f0, float3 v, float3 h)
     return f0 + (1.0 - f0) * pow(1.0 - VdotH, 5.0);
 }
 
-float3 PBR(float3 n, float3 l, float3 v, float3 h, float f0, MaterialProperties material)
+float3 PBR(float3 n, float3 l, float3 v, float3 h, MaterialProperties material)
 {
+    float f0 = material.BaseReflectivity;
     float3 lerpF0 = lerp(float3(f0, f0, f0), material.DiffuseColor, material.Metallic);
 
     float d = D(n, h, material.Roughness);
@@ -175,7 +194,7 @@ float3 PBR(float3 n, float3 l, float3 v, float3 h, float f0, MaterialProperties 
 
     if (ao < 0.85) ao *= 0.5;
 
-    float3 color = EmissiveColor +
+    float3 color = material.EmissiveColor * material.DiffuseColor +
     LightColor * (kd * material.DiffuseColor / PI + specular) * NdotL +
     //AmbientColor * material.DiffuseColor * material.Ao;
     AmbientColor * material.DiffuseColor * ao;
@@ -210,7 +229,7 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     float3 normal = tex2D(NormalMapTextureSampler, input.TextureCoordinates).xyz;
     normal = normal * 2.0 - 1.0;
-    //normal.y = -normal.y;
+    if (InvertGreenChannel) normal.y = -normal.y;
     normal = normalize(mul(normal, tbn));
 
     float3 viewDirection = -normalize(input.WorldViewPosition);
@@ -219,12 +238,16 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     MaterialProperties material;
 
-    material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates).xyz;
+    if (UseSingleDiffuseColor) material.DiffuseColor = DiffuseColor;
+    else material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates).xyz;
     material.Roughness = tex2D(RoughnessMapTextureSampler, input.TextureCoordinates).x;
     material.Metallic = tex2D(MetallicMapTextureSampler, input.TextureCoordinates).x;
     material.Ao = tex2D(AoMapTextureSampler, input.TextureCoordinates).x;
+    if (UseSingleEmissiveColor) material.EmissiveColor = EmissiveColor;
+    else material.EmissiveColor = tex2D(EmissiveMapTextureSampler, input.TextureCoordinates).xyz;
+    material.BaseReflectivity = BaseReflectivity;
 
-    float3 color = PBR(normal, lightDirection, viewDirection, halfDirection, BaseReflectivity, material);
+    float3 color = PBR(normal, lightDirection, viewDirection, halfDirection, material);
 
     output.target0 = float4(color, 1.0);
 
@@ -232,7 +255,7 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     //if (brightness > 1.0)
 
-    if (color.r > 0.5 || color.g > 0.5 || color.b > 0.5)
+    if (material.Roughness > 0.95)
     {
         output.target1 = float4(color, 1.0);
     }

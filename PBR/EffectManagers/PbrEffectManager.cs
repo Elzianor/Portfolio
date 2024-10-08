@@ -19,7 +19,13 @@ internal class PbrEffectManager : BaseEffectManager
             Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
             Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
             Effect.Parameters["AoMapTexture"].SetValue(_material.AoMapTexture);
+            Effect.Parameters["EmissiveMapTexture"].SetValue(_material.EmissiveMapTexture);
             Effect.Parameters["BaseReflectivity"].SetValue(_material.BaseReflectivity);
+            Effect.Parameters["InvertGreenChannel"].SetValue(_material.InvertGreenChannel);
+            Effect.Parameters["UseSingleDiffuseColor"].SetValue(_material.UseSingleDiffuseColor);
+            Effect.Parameters["DiffuseColor"].SetValue(_material.DiffuseColor);
+            Effect.Parameters["UseSingleEmissiveColor"].SetValue(_material.UseSingleEmissiveColor);
+            Effect.Parameters["EmissiveColor"].SetValue(_material.EmissiveColor);
         }
     }
 
@@ -99,14 +105,43 @@ internal class PbrEffectManager : BaseEffectManager
         }
     }
 
-    private Vector3 _emissiveColor;
-    public Vector3 EmissiveColor
+    public bool UseSingleDiffuseColor
     {
-        get => _emissiveColor;
+        get => _material.UseSingleDiffuseColor;
         set
         {
-            _emissiveColor = value;
-            Effect.Parameters["EmissiveColor"].SetValue(_emissiveColor);
+            _material.UseSingleDiffuseColor = value;
+            Effect.Parameters["UseSingleDiffuseColor"].SetValue(_material.UseSingleDiffuseColor);
+        }
+    }
+    public Vector3 DiffuseColor
+    {
+        get => _material.DiffuseColor;
+        set
+        {
+            _material.DiffuseColor = value;
+            if (_material.UseSingleDiffuseColor)
+                Effect.Parameters["DiffuseColor"].SetValue(_material.DiffuseColor);
+        }
+    }
+
+    public bool UseSingleEmissiveColor
+    {
+        get => _material.UseSingleEmissiveColor;
+        set
+        {
+            _material.UseSingleEmissiveColor = value;
+            Effect.Parameters["UseSingleEmissiveColor"].SetValue(_material.UseSingleEmissiveColor);
+        }
+    }
+    public Vector3 EmissiveColor
+    {
+        get => _material.EmissiveColor;
+        set
+        {
+            _material.EmissiveColor = value;
+            if (_material.UseSingleEmissiveColor)
+                Effect.Parameters["EmissiveColor"].SetValue(_material.EmissiveColor);
         }
     }
 

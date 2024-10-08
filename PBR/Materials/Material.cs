@@ -1,16 +1,27 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using System;
+using System.IO;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace PBR.Materials;
 
 internal class Material
 {
-    public Texture2D DiffuseMapTexture { get; }
-    public Texture2D NormalMapTexture { get; }
-    public Texture2D RoughnessMapTexture { get; }
-    public Texture2D MetallicMapTexture { get; }
-    public Texture2D AoMapTexture { get; }
+    private ContentManager _contentManager;
+
+    public bool UseSingleDiffuseColor { get; set; }
+    public Vector3 DiffuseColor { get; set; }
+    public Texture2D DiffuseMapTexture { get; set; }
+    public Texture2D NormalMapTexture { get; set; }
+    public Texture2D RoughnessMapTexture { get; set; }
+    public Texture2D MetallicMapTexture { get; set; }
+    public Texture2D AoMapTexture { get; set; }
+    public Texture2D EmissiveMapTexture { get; set; }
+    public bool UseSingleEmissiveColor { get; set; }
+    public Vector3 EmissiveColor { get; set; }
     public float BaseReflectivity { get; set; }
+    public bool InvertGreenChannel { get; set; }
 
     public Material(ContentManager contentManager,
         string diffuseTexturePath,
@@ -18,13 +29,33 @@ internal class Material
         string roughnessTexturePath,
         string metallicTexturePath,
         string aoTexturePath,
-        float baseReflectivity)
+        string emissiveTexturePath,
+        float baseReflectivity,
+        bool invertGreenChannel)
     {
-        DiffuseMapTexture = contentManager.Load<Texture2D>(diffuseTexturePath);
-        NormalMapTexture = contentManager.Load<Texture2D>(normalTexturePath);
-        RoughnessMapTexture = contentManager.Load<Texture2D>(roughnessTexturePath);
-        MetallicMapTexture = contentManager.Load<Texture2D>(metallicTexturePath);
-        AoMapTexture = contentManager.Load<Texture2D>(aoTexturePath);
+        _contentManager = contentManager;
+
+        DiffuseMapTexture = LoadTexture(diffuseTexturePath);
+        NormalMapTexture = LoadTexture(normalTexturePath);
+        RoughnessMapTexture = LoadTexture(roughnessTexturePath);
+        MetallicMapTexture = LoadTexture(metallicTexturePath);
+        AoMapTexture = LoadTexture(aoTexturePath);
+        EmissiveMapTexture = LoadTexture(emissiveTexturePath);
         BaseReflectivity = baseReflectivity;
+        InvertGreenChannel = invertGreenChannel;
+    }
+
+    private Texture2D LoadTexture(string texturePath)
+    {
+        if (string.IsNullOrEmpty(texturePath)) return null;
+
+        try
+        {
+            return _contentManager.Load<Texture2D>(texturePath);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }
