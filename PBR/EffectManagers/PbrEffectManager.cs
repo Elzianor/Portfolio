@@ -16,16 +16,21 @@ internal class PbrEffectManager : BaseEffectManager
             _material = value;
             Effect.Parameters["DiffuseMapTexture"].SetValue(_material.DiffuseMapTexture);
             Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
+            Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
             Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
             Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
             Effect.Parameters["AoMapTexture"].SetValue(_material.AoMapTexture);
             Effect.Parameters["EmissiveMapTexture"].SetValue(_material.EmissiveMapTexture);
             Effect.Parameters["BaseReflectivity"].SetValue(_material.BaseReflectivity);
             Effect.Parameters["InvertGreenChannel"].SetValue(_material.InvertGreenChannel);
+            Effect.Parameters["IsDepthMap"].SetValue(_material.IsDepthMap);
             Effect.Parameters["UseSingleDiffuseColor"].SetValue(_material.UseSingleDiffuseColor);
             Effect.Parameters["DiffuseColor"].SetValue(_material.DiffuseColor);
             Effect.Parameters["UseSingleEmissiveColor"].SetValue(_material.UseSingleEmissiveColor);
             Effect.Parameters["EmissiveColor"].SetValue(_material.EmissiveColor);
+            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.ParallaxHeightScale);
+            Effect.Parameters["ParallaxMinSteps"].SetValue(_material.ParallaxMinSteps);
+            Effect.Parameters["ParallaxMaxSteps"].SetValue(_material.ParallaxMaxSteps);
         }
     }
 
@@ -153,6 +158,16 @@ internal class PbrEffectManager : BaseEffectManager
         {
             _lightIntensity = value;
             RecalculateLightColor();
+        }
+    }
+
+    public float ParallaxHeightScale
+    {
+        get => _material.ParallaxHeightScale;
+        set
+        {
+            _material.ParallaxHeightScale = value;
+            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.ParallaxHeightScale);
         }
     }
 

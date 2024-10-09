@@ -28,6 +28,10 @@ cbuffer Lighting
 
     float BaseReflectivity;
     bool InvertGreenChannel;
+    bool IsDepthMap;
+    float ParallaxHeightScale;
+    int ParallaxMinSteps;
+    int ParallaxMaxSteps;
 }
 
 cbuffer Textures
@@ -46,6 +50,16 @@ cbuffer Textures
     sampler2D NormalMapTextureSampler = sampler_state
     {
         Texture = (NormalMapTexture);
+        MinFilter = Linear;
+        MagFilter = Linear;
+        AddressU = Wrap;
+        AddressV = Wrap;
+    };
+
+    texture HeightMapTexture;
+    sampler2D HeightMapTextureSampler = sampler_state
+    {
+        Texture = (HeightMapTexture);
         MinFilter = Linear;
         MagFilter = Linear;
         AddressU = Wrap;
@@ -108,7 +122,7 @@ struct VertexShaderOutput
     float4 Position : SV_POSITION;
     float2 TextureCoordinates : TEXCOORD0;
     float3 WorldViewPosition : TEXCOORD1;
-    float3x3 TBN : TEXCOORD2;
+    float3x3 Tbn : TEXCOORD2;
 };
 
 struct PixelShaderOutput
@@ -202,21 +216,67 @@ float3 PBR(float3 n, float3 l, float3 v, float3 h, MaterialProperties material)
     return saturate(color);
 }
 
+float2 ParallaxOcclusionMapping(float2 texCoords, float3 viewDirTangentSpace)
+{
+    viewDirTangentSpace = normalize(viewDirTangentSpace);
+
+    int steps = lerp(ParallaxMinSteps, ParallaxMaxSteps, length(viewDirTangentSpace.xy));
+    const float stepDelta = 1.0 / steps;
+
+    float2 uvDelta = viewDirTangentSpace.xy * ParallaxHeightScale / (viewDirTangentSpace.z * steps);
+
+    float2 currentUV = texCoords;
+    float currentStepDepth = 0.0;
+
+    for (int i = 0; i < steps; i++)
+    {
+        currentUV = texCoords - i * uvDelta;
+        float currentHeightMapValue = tex2D(HeightMapTextureSampler, currentUV).x;
+        if (!IsDepthMap) currentHeightMapValue = 1.0 - currentHeightMapValue;
+        currentStepDepth = i * stepDelta;
+
+        if (currentStepDepth >= currentHeightMapValue ||
+            i == 100) // HLSL do not like dynamic loops, so we set maximum possible number of cycles
+            break;
+    }
+
+    // Binary search to refine the intersection point
+    float2 prevUV = currentUV + uvDelta;
+
+    for (int j = 0; j < 5; j++)  // 5 refinement steps
+    {
+        float currentDepth = tex2D(HeightMapTextureSampler, currentUV).r;
+        float prevDepth = tex2D(HeightMapTextureSampler, prevUV).r;
+        float midDepth = (currentDepth + prevDepth) / 2.0;
+
+        if (midDepth < currentStepDepth)
+        {
+            currentUV = (currentUV + prevUV) / 2.0;
+        }
+        else
+        {
+            prevUV = (currentUV + prevUV) / 2.0;
+        }
+    }
+
+    return currentUV;
+}
+
 // --- VERTEX AND PIXEL SHADERS ---
 
 VertexShaderOutput VS(VertexShaderInput input)
 {
     VertexShaderOutput output;
 
-    float3 normal = mul(input.Normal, (float3x3)WorldViewInverseTranspose);
-    float3 tangent = mul(input.Tangent, (float3x3)WorldViewInverseTranspose);
+    float3 normal = normalize(mul(input.Normal, (float3x3)WorldViewInverseTranspose));
+    float3 tangent = normalize(mul(input.Tangent, (float3x3)WorldViewInverseTranspose));
     tangent = normalize(tangent - dot(tangent, normal) * normal);
-    float3 bitangent = cross(normal, tangent);
+    float3 bitangent = normalize(-cross(normal, tangent));
 
     output.Position = mul(input.Position, WorldViewProjection);
     output.TextureCoordinates = input.TextureCoordinates;
     output.WorldViewPosition = mul(input.Position, WorldView).xyz;
-    output.TBN = float3x3(tangent, bitangent, normal);
+    output.Tbn = float3x3(tangent, bitangent, normal);
 
     return output;
 }
@@ -225,26 +285,37 @@ PixelShaderOutput PS(VertexShaderOutput input)
 {
     PixelShaderOutput output;
 
-    float3x3 tbn = input.TBN;
+    float3x3 tbn = input.Tbn;
+    float3x3 inverseTbn = transpose(tbn);
 
-    float3 normal = tex2D(NormalMapTextureSampler, input.TextureCoordinates).xyz;
+    float3 viewDirection = normalize(-input.WorldViewPosition);
+    float3 lightDirection = normalize(-LightDirection);
+    float3 halfDirection = normalize(viewDirection + lightDirection);
+
+    float3 viewDirectionTangentSpace = normalize(mul(viewDirection, inverseTbn));
+
+    float2 parallaxUV = ParallaxOcclusionMapping(input.TextureCoordinates, viewDirectionTangentSpace);
+
+    if (parallaxUV.x > 1.0 ||
+        parallaxUV.y > 1.0 ||
+        parallaxUV.x < 0.0 ||
+        parallaxUV.y < 0.0)
+        discard;
+
+    float3 normal = tex2D(NormalMapTextureSampler, parallaxUV).xyz;
     normal = normal * 2.0 - 1.0;
     if (InvertGreenChannel) normal.y = -normal.y;
     normal = normalize(mul(normal, tbn));
 
-    float3 viewDirection = -normalize(input.WorldViewPosition);
-    float3 lightDirection = -normalize(LightDirection);
-    float3 halfDirection = normalize(viewDirection + lightDirection);
-
     MaterialProperties material;
 
     if (UseSingleDiffuseColor) material.DiffuseColor = DiffuseColor;
-    else material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates).xyz;
-    material.Roughness = tex2D(RoughnessMapTextureSampler, input.TextureCoordinates).x;
-    material.Metallic = tex2D(MetallicMapTextureSampler, input.TextureCoordinates).x;
-    material.Ao = tex2D(AoMapTextureSampler, input.TextureCoordinates).x;
+    else material.DiffuseColor = tex2D(DiffuseMapTextureSampler, parallaxUV).xyz;
+    material.Roughness = tex2D(RoughnessMapTextureSampler, parallaxUV).x;
+    material.Metallic = tex2D(MetallicMapTextureSampler, parallaxUV).x;
+    material.Ao = tex2D(AoMapTextureSampler, parallaxUV).x;
     if (UseSingleEmissiveColor) material.EmissiveColor = EmissiveColor;
-    else material.EmissiveColor = tex2D(EmissiveMapTextureSampler, input.TextureCoordinates).xyz;
+    else material.EmissiveColor = tex2D(EmissiveMapTextureSampler, parallaxUV).xyz;
     material.BaseReflectivity = BaseReflectivity;
 
     float3 color = PBR(normal, lightDirection, viewDirection, halfDirection, material);
@@ -255,7 +326,7 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     //if (brightness > 1.0)
 
-    if (material.Roughness > 0.95)
+    if (material.Metallic > 0.7)
     {
         output.target1 = float4(color, 1.0);
     }

@@ -1,8 +1,8 @@
 ﻿using Beryllium.VertexTypes;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using PBR.Primitives3D;
 
 namespace Beryllium.Primitives3D;
 
@@ -23,20 +23,10 @@ public class SphereVertex
     }
 }
 
-public class DrawableSphere
+public class DrawableSphere : DrawableBasePrimitive
 {
-    private GraphicsDevice _graphicsDevice;
-    private List<SphereVertex> _vertices = new();
-    private List<int> _indices = new();
-    private VertexBuffer _vertexBuffer;
-
-    public VertexPositionNormalTangentTexture[] Vertices { get; private set; }
-    public int[] Indices { get; private set; }
-
-    public DrawableSphere(GraphicsDevice graphicsDevice)
-    {
-        _graphicsDevice = graphicsDevice;
-    }
+    private readonly List<SphereVertex> _vertices = new();
+    private readonly List<int> _indices = new();
 
     public void Generate(int radius, int longitudeSegments, int latitudeSegments, float uvCoefficient)
     {
@@ -116,9 +106,9 @@ public class DrawableSphere
             f * (deltaUV2.Y * edge1.Z - deltaUV1.Y * edge2.Z)
         );
 
-        v1.AddTangent(tangent);
-        v2.AddTangent(tangent);
-        v3.AddTangent(tangent);
+        v1.AddTangent(-tangent);
+        v2.AddTangent(-tangent);
+        v3.AddTangent(-tangent);
     }
 
     private void SetVertices()
@@ -134,12 +124,5 @@ public class DrawableSphere
                 vertex.Tangent,
                 vertex.TextureCoordinate);
         }
-
-        _vertexBuffer = new VertexBuffer(_graphicsDevice,
-            typeof(VertexPositionNormalTangentTexture),
-            Vertices.Length,
-            BufferUsage.None);
-
-        _vertexBuffer.SetData(Vertices);
     }
 }

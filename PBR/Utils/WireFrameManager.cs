@@ -5,14 +5,15 @@ namespace PBR.Utils
     internal class WireFrameManager
     {
         private GraphicsDevice _graphicsDevice;
-        private bool _isWireFrame;
         private RasterizerState _wireFrameMode;
         private RasterizerState _defaultMode;
+
+        public bool IsWireFrame { get; private set; }
 
         public WireFrameManager(GraphicsDevice graphicsDevice, bool isWireFrame = false)
         {
             _graphicsDevice = graphicsDevice;
-            _isWireFrame = isWireFrame;
+            IsWireFrame = isWireFrame;
             _wireFrameMode = new RasterizerState
             {
                 FillMode = FillMode.WireFrame,
@@ -22,12 +23,12 @@ namespace PBR.Utils
 
         public void ToggleWireFrame()
         {
-            _isWireFrame = !_isWireFrame;
+            IsWireFrame = !IsWireFrame;
         }
 
         public void ApplyWireFrame()
         {
-            if (!_isWireFrame) return;
+            if (!IsWireFrame) return;
 
             _defaultMode = _graphicsDevice.RasterizerState;
             _graphicsDevice.RasterizerState = _wireFrameMode;
@@ -35,7 +36,7 @@ namespace PBR.Utils
 
         public void RestoreDefault()
         {
-            if (!_isWireFrame) return;
+            if (!IsWireFrame) return;
 
             _graphicsDevice.RasterizerState = _defaultMode;
         }

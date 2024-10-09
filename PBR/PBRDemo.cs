@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using PBR.EffectManagers;
 using PBR.Effects;
 using PBR.Materials;
+using PBR.Primitives3D;
 using PBR.Utils;
 using System;
 
@@ -14,11 +15,14 @@ namespace PBR;
 
 public class PBRDemo : Game
 {
+    private bool _isLightOn;
     private bool _showOnlyBlurPart;
     private bool _applyBlur;
     private int _blurPasses = 10;
 
     private float _lightDirectionAngle;
+    private float _meshRotationAngleX;
+    private float _meshRotationAngleY;
 
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
@@ -30,7 +34,13 @@ public class PBRDemo : Game
     private RenderTarget2D _blurRenderTarget2;
 
     private DrawableSphere _drawableSphere;
+    private DrawableTile _drawableTile;
     private DrawableFullScreenQuad _drawableFullScreenQuad;
+
+    private DrawableBasePrimitive _currentDrawableMesh;
+
+    private BasicEffect _baseEffect;
+    private VertexPositionColor[] _lightVector;
 
     private FpsCounter _fpsCounter;
     
@@ -64,8 +74,17 @@ public class PBRDemo : Game
 
         _wireFrameManager = new WireFrameManager(GraphicsDevice);
 
-        _drawableSphere = new DrawableSphere(GraphicsDevice);
+        _isLightOn = true;
+
+        _lightVector = new VertexPositionColor[2];
+        _lightVector[0].Color = Color.Red;
+        _lightVector[1].Color = Color.Yellow;
+        _lightVector[1].Position = new Vector3(0, 2, 0);
+
+        _drawableSphere = new DrawableSphere();
         _drawableSphere.Generate(2, 30, 30, 0.5f);
+        _drawableTile = new DrawableTile();
+        _drawableTile.Generate(2.0f);
 
         _drawableFullScreenQuad = new DrawableFullScreenQuad(GraphicsDevice);
 
@@ -102,17 +121,30 @@ public class PBRDemo : Game
         //const string folderName = "Bricks";
         //const string folderName = "RustyMetal";
         //const string folderName = "PolishedWood";
-        const string folderName = "LavaRock";
+        //const string folderName = "LavaRock";
+        //const string folderName = "SpaceShipMonitors";
+        //const string folderName = "TreeBark";
+        //const string folderName = "WallScales";
+        const string folderName = "ColorTiles";
+        //const string folderName = "WoodToy";
+
+        _currentDrawableMesh = _drawableTile;
+        //_currentDrawableMesh = _drawableSphere;
 
         _material = new Material(Content,
             $"Material/{folderName}/Diffuse",
             $"Material/{folderName}/Normal",
+            $"Material/{folderName}/Height",
             $"Material/{folderName}/Roughness",
             $"Material/{folderName}/Metallic",
             $"Material/{folderName}/AO",
             $"Material/{folderName}/Emissive",
             0.04f,
-            true);
+            true,
+            false,
+            0.025f,
+            10,
+            30);
 
         var cameraPosition = new Vector3(0, 5, 5);
         var cameraLookAt = Vector3.Zero;
@@ -133,12 +165,23 @@ public class PBRDemo : Game
         _pbrEffectManager.LightColor = new Color(255, 251, 215).ToVector3();
         _pbrEffectManager.AmbientColor = new Vector3(0.02f, 0.02f, 0.02f);
         _pbrEffectManager.EmissiveColor = Vector3.Zero;
-        _pbrEffectManager.LightIntensity = 6.5f;
+        _pbrEffectManager.LightIntensity = 3.5f;
 
         _blurEffectManager.TexelSize = new Vector2(1.0f / _graphics.PreferredBackBufferWidth,
             1.0f / _graphics.PreferredBackBufferHeight);
         _blurEffectManager.HorizontalPass = true;
         _blurEffectManager.GaussianWeights = new[] { 0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f };
+
+        _baseEffect = new BasicEffect(GraphicsDevice)
+        {
+            VertexColorEnabled = true,
+            World = _pbrEffectManager.WorldMatrix,
+            View = _pbrEffectManager.ViewMatrix,
+            Projection = _pbrEffectManager.ProjectionMatrix
+        };
+
+        UpdateLightVector();
+        UpdateMeshRotation();
     }
 
     protected override void Update(GameTime gameTime)
@@ -170,16 +213,24 @@ public class PBRDemo : Game
             _spriteBatch.End();
         }
 
-        _spriteBatch.Begin();
-        _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.Fps:n2}", new Vector2(10, 10), Color.White);
-        _spriteBatch.DrawString(_font, $"Base reflectivity: {_pbrEffectManager.BaseReflectivity:n2}", new Vector2(10, 30), Color.White);
-        _spriteBatch.DrawString(_font, $"Blur: {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 50), Color.White);
-
-        if (_applyBlur)
+        if (_isLightOn)
         {
-            _spriteBatch.DrawString(_font, $"Blur passes: {_blurPasses}", new Vector2(10, 70), Color.White);
+            _baseEffect.CurrentTechnique.Passes[0].Apply();
+
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList,
+                _lightVector,
+                0,
+                1);
         }
 
+        _spriteBatch.Begin();
+        _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.Fps:n2}", new Vector2(10, 10), Color.White);
+        _spriteBatch.DrawString(_font, $"Wireframe: {_wireFrameManager.IsWireFrame}", new Vector2(10, 30), Color.White);
+        _spriteBatch.DrawString(_font, $"Base reflectivity (I) - (O): {_pbrEffectManager.BaseReflectivity:n2}",
+            new Vector2(10, 50), Color.White);
+        _spriteBatch.DrawString(_font, $"Blur (B): {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 70), Color.White);
+        if (_applyBlur)
+            _spriteBatch.DrawString(_font, $"Blur passes (V) - (N): {_blurPasses}", new Vector2(10, 90), Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -195,12 +246,12 @@ public class PBRDemo : Game
         _wireFrameManager.ApplyWireFrame();
 
         GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            _drawableSphere.Vertices,
+            _currentDrawableMesh.Vertices,
             0,
-            _drawableSphere.Vertices.Length,
-            _drawableSphere.Indices,
+            _currentDrawableMesh.Vertices.Length,
+            _currentDrawableMesh.Indices,
             0,
-            _drawableSphere.Indices.Length / 3);
+            _currentDrawableMesh.Indices.Length / 3);
 
         _wireFrameManager.RestoreDefault();
     }
@@ -264,6 +315,19 @@ public class PBRDemo : Game
             2);
     }
 
+    private void UpdateLightVector()
+    {
+        var ldn = _pbrEffectManager.LightDirection;
+        ldn.Normalize();
+        _lightVector[0].Position = _lightVector[1].Position - ldn * 0.3f;
+    }
+
+    private void UpdateMeshRotation()
+    {
+        _pbrEffectManager.WorldMatrix = Matrix.CreateRotationZ(_meshRotationAngleY) *
+                                        Matrix.CreateRotationX(_meshRotationAngleX);
+    }
+
     private void HandleInputs()
     {
         KeyboardManager.Update();
@@ -271,6 +335,13 @@ public class PBRDemo : Game
 
         // Wireframe mode
         if (KeyboardManager.IsKeyPressed(Keys.W)) _wireFrameManager.ToggleWireFrame();
+
+        // Light on/off
+        if (KeyboardManager.IsKeyPressed(Keys.L))
+        {
+            _isLightOn = !_isLightOn;
+            _pbrEffectManager.LightIntensity = _isLightOn ? 3.5f : 0.0f;
+        }
 
         // Blur
         if (KeyboardManager.IsKeyPressed(Keys.Q)) _showOnlyBlurPart = !_showOnlyBlurPart;
@@ -307,22 +378,55 @@ public class PBRDemo : Game
         }
 
         // Light direction
-        if (KeyboardManager.IsKeyDown(Keys.Left))
+        if (KeyboardManager.IsKeyDown(Keys.OemComma))
         {
             _lightDirectionAngle += (float)(1.0 / _fpsCounter.Fps);
 
             _pbrEffectManager.LightDirection = new Vector3((float)Math.Cos(_lightDirectionAngle),
                 -1,
                 (float)Math.Sin(_lightDirectionAngle));
+
+            UpdateLightVector();
         }
 
-        if (KeyboardManager.IsKeyDown(Keys.Right))
+        if (KeyboardManager.IsKeyDown(Keys.OemPeriod))
         {
             _lightDirectionAngle -= (float)(1.0 / _fpsCounter.Fps);
 
             _pbrEffectManager.LightDirection = new Vector3((float)Math.Cos(_lightDirectionAngle),
                 -1,
                 (float)Math.Sin(_lightDirectionAngle));
+
+            UpdateLightVector();
+        }
+
+        // Mesh rotation
+        if (KeyboardManager.IsKeyDown(Keys.Up))
+        {
+            _meshRotationAngleX -= (float)(1.0 / _fpsCounter.Fps);
+
+            UpdateMeshRotation();
+        }
+
+        if (KeyboardManager.IsKeyDown(Keys.Down))
+        {
+            _meshRotationAngleX += (float)(1.0 / _fpsCounter.Fps);
+
+            UpdateMeshRotation();
+        }
+
+        if (KeyboardManager.IsKeyDown(Keys.Left))
+        {
+            _meshRotationAngleY += (float)(1.0 / _fpsCounter.Fps);
+
+            UpdateMeshRotation();
+        }
+
+        if (KeyboardManager.IsKeyDown(Keys.Right))
+        {
+            _meshRotationAngleY -= (float)(1.0 / _fpsCounter.Fps);
+
+            UpdateMeshRotation();
         }
     }
 }
