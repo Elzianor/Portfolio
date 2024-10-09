@@ -8,8 +8,8 @@ public class Fabric
 {
     private readonly Vector3 _gravitationalAcceleration = new (0, -9.8f, 0);
 
-    public List<MassParticle> MassParticles { get; } = [];
-    public List<FabricThread> FabricThreads { get; set; } = [];
+    public List<MassParticle> MassParticles { get; } = new();
+    public List<FabricThread> FabricThreads { get; set; } = new();
 
     public void Update(float timeStep)
     {

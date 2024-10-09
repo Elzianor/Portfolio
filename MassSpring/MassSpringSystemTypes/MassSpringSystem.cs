@@ -7,8 +7,8 @@ public class MassSpringSystem
 {
     private readonly Vector3 _gravitationalAcceleration = new (0, -9.8f, 0);
 
-    public List<MassParticle> MassParticles { get; } = [];
-    public List<Spring> Springs { get; set; } = [];
+    public List<MassParticle> MassParticles { get; } = new();
+    public List<Spring> Springs { get; set; } = new();
 
     public void Update(float timeStep)
     {

@@ -7,7 +7,7 @@ public class MassParticle
 {
     private float _timeStep;
     private Vector3 _acceleration = new(0, -9.8f, 0);
-    private List<FabricThread> _ownFabricThreads = [];
+    private List<FabricThread> _ownFabricThreads = new();
 
     public float Mass { get; set; }
     public Vector3 TotalForce { get; set; }

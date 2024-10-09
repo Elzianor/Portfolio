@@ -2,14 +2,20 @@
 
 namespace Beryllium.Physics;
 
-public class Spring(MassParticle mass1, MassParticle mass2)
+public class Spring
 {
-    public MassParticle Mass1 { get; } = mass1;
-    public MassParticle Mass2 { get; } = mass2;
+    public MassParticle Mass1 { get; }
+    public MassParticle Mass2 { get; }
     public float RestLength { get; set; }
     public float Stiffness { get; set; }
     public float Damping { get; set; }
     public bool Disabled { get; set; }
+
+    public Spring(MassParticle mass1, MassParticle mass2)
+    {
+        Mass1 = mass1;
+        Mass2 = mass2;
+    }
 
     public void Update()
     {
