@@ -10,13 +10,14 @@ using PBR.Materials;
 using PBR.Primitives3D;
 using PBR.Utils;
 using System;
-using Beryllium.VertexTypes;
 
 namespace PBR;
 
 public class PBRDemo : Game
 {
     private bool _isLightOn;
+    private float _lightIntensity = 3.5f;
+    private bool _applyGammaCorrection;
     private bool _showOnlyBlurPart;
     private bool _applyBlur;
     private int _blurPasses = 10;
@@ -227,11 +228,13 @@ public class PBRDemo : Game
         _spriteBatch.Begin();
         _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.Fps:n2}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(_font, $"Wireframe: {_wireFrameManager.IsWireFrame}", new Vector2(10, 30), Color.White);
-        _spriteBatch.DrawString(_font, $"Base reflectivity (I) - (O): {_pbrEffectManager.BaseReflectivity:n2}",
-            new Vector2(10, 50), Color.White);
-        _spriteBatch.DrawString(_font, $"Blur (B): {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 70), Color.White);
+        _spriteBatch.DrawString(_font, $"Gamma correction: {_applyGammaCorrection}", new Vector2(10, 50), Color.White);
+        _spriteBatch.DrawString(_font, $"Light: {(_isLightOn ? "ON" : "OFF")}", new Vector2(10, 70), Color.White);
+        _spriteBatch.DrawString(_font, $"Light intensity (Z) - (X): {_lightIntensity:n2}", new Vector2(10, 90), Color.White);
+        _spriteBatch.DrawString(_font, $"Base reflectivity (I) - (O): {_pbrEffectManager.BaseReflectivity:n2}", new Vector2(10, 110), Color.White);
+        _spriteBatch.DrawString(_font, $"Blur (B): {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 130), Color.White);
         if (_applyBlur)
-            _spriteBatch.DrawString(_font, $"Blur passes (V) - (N): {_blurPasses}", new Vector2(10, 90), Color.White);
+            _spriteBatch.DrawString(_font, $"Blur passes (V) - (N): {_blurPasses}", new Vector2(10, 150), Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -341,7 +344,32 @@ public class PBRDemo : Game
         if (KeyboardManager.IsKeyPressed(Keys.L))
         {
             _isLightOn = !_isLightOn;
-            _pbrEffectManager.LightIntensity = _isLightOn ? 3.5f : 0.0f;
+            _pbrEffectManager.LightIntensity = _isLightOn ? _lightIntensity : 0.0f;
+        }
+
+        // Light intensity
+        if (KeyboardManager.IsKeyPressed(Keys.Z))
+        {
+            _lightIntensity -= 0.1f;
+
+            if (_lightIntensity <= 0) _lightIntensity = 0.0f;
+
+            _pbrEffectManager.LightIntensity = _lightIntensity;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.X))
+        {
+            _lightIntensity += 0.1f;
+
+            _pbrEffectManager.LightIntensity = _lightIntensity;
+        }
+
+        // Gamma correction
+        if (KeyboardManager.IsKeyPressed(Keys.G))
+        {
+            _applyGammaCorrection = !_applyGammaCorrection;
+            _pbrEffectManager.ApplyGammaCorrection = _applyGammaCorrection;
+            _mergeBlurEffectManager.ApplyGammaCorrection = _applyGammaCorrection;
         }
 
         // Blur

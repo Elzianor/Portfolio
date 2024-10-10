@@ -27,6 +27,16 @@ internal class MergeBlurEffectManager : BaseEffectManager
         }
     }
 
+    private bool _applyGammaCorrection;
+    public bool ApplyGammaCorrection
+    {
+        get => _applyGammaCorrection;
+        set
+        {
+            _applyGammaCorrection = value;
+            Effect.Parameters["ApplyGammaCorrection"].SetValue(_applyGammaCorrection);
+        }
+    }
 
     public MergeBlurEffectManager(ContentManager contentManager,
         string effectPath)

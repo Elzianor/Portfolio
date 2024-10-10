@@ -29,6 +29,12 @@ float3 GammaCorrection(float3 color, float gamma)
     return pow(max(color, 0.0), float3(g, g, g));
 }
 
+float3 InverseGammaCorrection(float3 color, float gamma)
+{
+    // inverse gamma correction
+    return pow(max(color, 0.0), float3(gamma, gamma, gamma));
+}
+
 // ----- SAFE OPERATION -----
 
 float Dot(float3 x, float3 y)

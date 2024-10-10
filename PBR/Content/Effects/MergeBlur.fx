@@ -6,6 +6,8 @@ cbuffer ExposureGammaData
 {
     float Exposure;
     float Gamma;
+
+    bool ApplyGammaCorrection;
 }
 
 cbuffer Textures
@@ -44,23 +46,31 @@ float4 PS(VertexShaderOutput input) : SV_TARGET0
 {
     float4 color = tex2D(MainSceneSampler, input.TextureCoordinates);
     float3 mainColor = color.rgb;
-    float3 blurColor = tex2D(BlurSampler, input.TextureCoordinates).rgb;
+    //float3 blurColor = tex2D(BlurSampler, input.TextureCoordinates).rgb;
 
-    // additive blending
-    mainColor += blurColor;
+    //// additive blending
+    //mainColor += blurColor;
 
-    float avg = (blurColor.r + blurColor.g + blurColor.b) / 3.0;
+    //float avg = (blurColor.r + blurColor.g + blurColor.b) / 3.0;
 
-    float exposure = 1.0;
-    float gamma = lerp(1.0, 2.2, avg);
+    //float exposure = 1.0;
+    //float gamma = lerp(1.0, 2.2, avg);
 
-    // tone mapping
-    float3 result = ToneMapping(mainColor, exposure);
+    //// tone mapping
+    //float3 result = ToneMapping(mainColor, exposure);
 
-    // gamma correction
-    result = GammaCorrection(result, gamma);
+    //// gamma correction
+    //result = GammaCorrection(result, gamma);
 
-    return float4(result, 1.0);
+    //return float4(result, 1.0);
+
+    if (ApplyGammaCorrection)
+    {
+        mainColor = GammaCorrection(mainColor, 2.2);
+    }
+
+    return float4(mainColor, 1.0);
+
 }
 
 // --- TECHNIQUES ---

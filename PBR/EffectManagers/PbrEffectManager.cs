@@ -171,6 +171,17 @@ internal class PbrEffectManager : BaseEffectManager
         }
     }
 
+    private bool _applyGammaCorrection;
+    public bool ApplyGammaCorrection
+    {
+        get => _applyGammaCorrection;
+        set
+        {
+            _applyGammaCorrection = value;
+            Effect.Parameters["ApplyGammaCorrection"].SetValue(_applyGammaCorrection);
+        }
+    }
+
     public PbrEffectManager(ContentManager contentManager,
         string effectPath)
         : base(contentManager, effectPath)

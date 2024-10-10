@@ -28,6 +28,8 @@ cbuffer Lighting
     float ParallaxHeightScale;
     int ParallaxMinSteps;
     int ParallaxMaxSteps;
+
+    bool ApplyGammaCorrection;
 }
 
 cbuffer Textures
@@ -188,6 +190,14 @@ PixelShaderOutput PS(VertexShaderOutput input)
     if (UseSingleEmissiveColor) material.EmissiveColor = EmissiveColor;
     else material.EmissiveColor = tex2D(EmissiveMapTextureSampler, parallaxUV).xyz;
     material.BaseReflectivity = BaseReflectivity;
+
+    if (ApplyGammaCorrection)
+    {
+        material.DiffuseColor = InverseGammaCorrection(material.DiffuseColor, 2.2);
+        material.EmissiveColor = InverseGammaCorrection(material.EmissiveColor, 2.2);
+        LightColor = InverseGammaCorrection(LightColor, 2.2);
+        AmbientColor = InverseGammaCorrection(AmbientColor, 2.2);
+    }
 
     float3 color = PBR(normal, lightDirection, viewDirection, halfDirection, material, LightColor, AmbientColor);
 
