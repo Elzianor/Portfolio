@@ -10,6 +10,7 @@ using PBR.Materials;
 using PBR.Primitives3D;
 using PBR.Utils;
 using System;
+using Beryllium.VertexTypes;
 
 namespace PBR;
 
