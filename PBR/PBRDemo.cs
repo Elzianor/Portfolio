@@ -6,10 +6,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PBR.EffectManagers;
 using PBR.Effects;
-using PBR.Materials;
 using PBR.Primitives3D;
 using PBR.Utils;
 using System;
+using Beryllium.Materials;
 
 namespace PBR;
 
@@ -126,33 +126,21 @@ public class PBRDemo : Game
         _blurEffectManager = new BlurEffectManager(Content, "Effects/Blur");
         _mergeBlurEffectManager = new MergeBlurEffectManager(Content, "Effects/MergeBlur");
 
-        //const string folderName = "Bricks";
+        const string folderName = "Bricks";
         //const string folderName = "RustyMetal";
         //const string folderName = "PolishedWood";
         //const string folderName = "LavaRock";
         //const string folderName = "SpaceShipMonitors";
         //const string folderName = "TreeBark";
         //const string folderName = "WallScales";
-        const string folderName = "ColorTiles";
+        //const string folderName = "ColorTiles";
         //const string folderName = "WoodToy";
 
         _currentDrawableMesh = _drawableTile;
         //_currentDrawableMesh = _drawableSphere;
 
-        _material = new Material(Content,
-            $"Material/{folderName}/Diffuse",
-            $"Material/{folderName}/Normal",
-            $"Material/{folderName}/Height",
-            $"Material/{folderName}/Roughness",
-            $"Material/{folderName}/Metallic",
-            $"Material/{folderName}/AO",
-            $"Material/{folderName}/Emissive",
-            0.04f,
-            true,
-            false,
-            0.025f,
-            10,
-            30);
+        _material = Material.Deserialize($"Content/Material/{folderName}/Material.json");
+        _material.TryLoadTextures(Content);
 
         var cameraPosition = new Vector3(0, 5, 5);
         var cameraLookAt = Vector3.Zero;
@@ -172,7 +160,6 @@ public class PBRDemo : Game
             (float)Math.Sin(_lightDirectionAngle));
         _pbrEffectManager.LightColor = new Color(255, 251, 215).ToVector3();
         _pbrEffectManager.AmbientColor = new Vector3(0.02f, 0.02f, 0.02f);
-        _pbrEffectManager.EmissiveColor = Vector3.Zero;
         _pbrEffectManager.LightIntensity = _lightIntensity;
         _pbrEffectManager.Gamma = _gamma;
 

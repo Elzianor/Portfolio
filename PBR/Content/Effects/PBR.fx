@@ -16,14 +16,8 @@ cbuffer Lighting
 
     float3 AmbientColor;
 
-    bool UseSingleDiffuseColor;
-    float3 DiffuseColor;
-
-    bool UseSingleEmissiveColor;
-    float3 EmissiveColor;
-
     float BaseReflectivity;
-    bool InvertGreenChannel;
+    bool InvertNormalYAxis;
     bool IsDepthMap;
     float ParallaxHeightScale;
     int ParallaxMinSteps;
@@ -178,18 +172,16 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     float3 normal = tex2D(NormalMapTextureSampler, parallaxUV).xyz;
     normal = normal * 2.0 - 1.0;
-    if (InvertGreenChannel) normal.y = -normal.y;
+    if (InvertNormalYAxis) normal.y = -normal.y;
     normal = normalize(mul(normal, tbn));
 
     MaterialProperties material;
 
-    if (UseSingleDiffuseColor) material.DiffuseColor = DiffuseColor;
-    else material.DiffuseColor = tex2D(DiffuseMapTextureSampler, parallaxUV).xyz;
+    material.DiffuseColor = tex2D(DiffuseMapTextureSampler, parallaxUV).xyz;
     material.Roughness = tex2D(RoughnessMapTextureSampler, parallaxUV).x;
     material.Metallic = tex2D(MetallicMapTextureSampler, parallaxUV).x;
     material.Ao = tex2D(AoMapTextureSampler, parallaxUV).x;
-    if (UseSingleEmissiveColor) material.EmissiveColor = EmissiveColor;
-    else material.EmissiveColor = tex2D(EmissiveMapTextureSampler, parallaxUV).xyz;
+    material.EmissiveColor = tex2D(EmissiveMapTextureSampler, parallaxUV).xyz;
     material.BaseReflectivity = BaseReflectivity;
 
     if (ApplyGammaCorrection)
@@ -204,11 +196,7 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     output.TargetGeneral = float4(color, 1.0);
 
-    //float brightness = dot(color.rgb, float3(0.5, 0.5, 0.5));
-
-    //if (brightness > 1.0)
-
-    if (color.r > 0.95 && color.g > 0.95 && color.b > 0.95)
+    if (material.Metallic > 0.95)
     {
         output.TargetBlur = float4(color, 1.0);
     }

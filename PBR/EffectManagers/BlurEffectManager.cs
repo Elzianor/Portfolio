@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Beryllium.EffectManagers;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
 namespace PBR.EffectManagers;
 
-internal class BlurEffectManager : BaseEffectManager
+internal class BlurEffectManager : EffectManagerBase
 {
     private Vector2 _texelSize;
     public Vector2 TexelSize

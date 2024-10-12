@@ -100,15 +100,9 @@ float3 PBR(float3 n, float3 l, float3 v, float3 h, MaterialProperties material, 
     float denominator = 4.0 * NdotV * NdotL;
     float3 specular = numerator / NonZeroDenominator(denominator);
 
-    float ao = material.Ao;
-
-    if (ao < 0.85)
-        ao *= 0.5;
-
     float3 color = material.EmissiveColor * material.DiffuseColor +
     lightColor * (kd * material.DiffuseColor / PI + specular) * NdotL +
-    //ambientColor * material.DiffuseColor * material.Ao;
-    ambientColor * material.DiffuseColor * ao;
+    ambientColor * material.DiffuseColor * material.Ao;
 
     return saturate(color);
 }

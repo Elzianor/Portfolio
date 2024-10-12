@@ -1,11 +1,11 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Beryllium.EffectManagers;
+using Beryllium.Materials;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using PBR.EffectManagers;
-using PBR.Materials;
 
 namespace PBR.Effects;
 
-internal class PbrEffectManager : BaseEffectManager
+internal class PbrEffectManager : EffectManagerBase
 {
     private Material _material;
     public Material Material
@@ -14,23 +14,23 @@ internal class PbrEffectManager : BaseEffectManager
         set
         {
             _material = value;
+            //Effect.Parameters["AmbientColor"].SetValue(_material.SolidColorProperties.AmbientColor);
+
             Effect.Parameters["DiffuseMapTexture"].SetValue(_material.DiffuseMapTexture);
             Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
             Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
             Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
             Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
-            Effect.Parameters["AoMapTexture"].SetValue(_material.AoMapTexture);
+            Effect.Parameters["AoMapTexture"].SetValue(_material.AmbientOcclusionMapTexture);
             Effect.Parameters["EmissiveMapTexture"].SetValue(_material.EmissiveMapTexture);
+
+            Effect.Parameters["InvertNormalYAxis"].SetValue(_material.TextureProperties.InvertNormalYAxis);
+            Effect.Parameters["IsDepthMap"].SetValue(_material.TextureProperties.IsDepthMap);
+            Effect.Parameters["ParallaxMinSteps"].SetValue(_material.TextureProperties.ParallaxMinSteps);
+            Effect.Parameters["ParallaxMaxSteps"].SetValue(_material.TextureProperties.ParallaxMaxSteps);
+            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.TextureProperties.ParallaxHeightScale);
+
             Effect.Parameters["BaseReflectivity"].SetValue(_material.BaseReflectivity);
-            Effect.Parameters["InvertGreenChannel"].SetValue(_material.InvertGreenChannel);
-            Effect.Parameters["IsDepthMap"].SetValue(_material.IsDepthMap);
-            Effect.Parameters["UseSingleDiffuseColor"].SetValue(_material.UseSingleDiffuseColor);
-            Effect.Parameters["DiffuseColor"].SetValue(_material.DiffuseColor);
-            Effect.Parameters["UseSingleEmissiveColor"].SetValue(_material.UseSingleEmissiveColor);
-            Effect.Parameters["EmissiveColor"].SetValue(_material.EmissiveColor);
-            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.ParallaxHeightScale);
-            Effect.Parameters["ParallaxMinSteps"].SetValue(_material.ParallaxMinSteps);
-            Effect.Parameters["ParallaxMaxSteps"].SetValue(_material.ParallaxMaxSteps);
         }
     }
 
@@ -110,46 +110,6 @@ internal class PbrEffectManager : BaseEffectManager
         }
     }
 
-    public bool UseSingleDiffuseColor
-    {
-        get => _material.UseSingleDiffuseColor;
-        set
-        {
-            _material.UseSingleDiffuseColor = value;
-            Effect.Parameters["UseSingleDiffuseColor"].SetValue(_material.UseSingleDiffuseColor);
-        }
-    }
-    public Vector3 DiffuseColor
-    {
-        get => _material.DiffuseColor;
-        set
-        {
-            _material.DiffuseColor = value;
-            if (_material.UseSingleDiffuseColor)
-                Effect.Parameters["DiffuseColor"].SetValue(_material.DiffuseColor);
-        }
-    }
-
-    public bool UseSingleEmissiveColor
-    {
-        get => _material.UseSingleEmissiveColor;
-        set
-        {
-            _material.UseSingleEmissiveColor = value;
-            Effect.Parameters["UseSingleEmissiveColor"].SetValue(_material.UseSingleEmissiveColor);
-        }
-    }
-    public Vector3 EmissiveColor
-    {
-        get => _material.EmissiveColor;
-        set
-        {
-            _material.EmissiveColor = value;
-            if (_material.UseSingleEmissiveColor)
-                Effect.Parameters["EmissiveColor"].SetValue(_material.EmissiveColor);
-        }
-    }
-
     private float _lightIntensity;
     public float LightIntensity
     {
@@ -163,11 +123,11 @@ internal class PbrEffectManager : BaseEffectManager
 
     public float ParallaxHeightScale
     {
-        get => _material.ParallaxHeightScale;
+        get => _material.TextureProperties.ParallaxHeightScale;
         set
         {
-            _material.ParallaxHeightScale = value;
-            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.ParallaxHeightScale);
+            _material.TextureProperties.ParallaxHeightScale = value;
+            Effect.Parameters["ParallaxHeightScale"].SetValue(_material.TextureProperties.ParallaxHeightScale);
         }
     }
 

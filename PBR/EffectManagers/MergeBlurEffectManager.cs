@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using Beryllium.EffectManagers;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace PBR.EffectManagers;
 
-internal class MergeBlurEffectManager : BaseEffectManager
+internal class MergeBlurEffectManager : EffectManagerBase
 {
     private RenderTarget2D _mainScene;
     public RenderTarget2D MainScene

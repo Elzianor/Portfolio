@@ -52,15 +52,6 @@ float4 PS(VertexShaderOutput input) : SV_TARGET0
     // additive blending
     mainColor += blurColor;
 
-    if (ApplyGammaCorrection)
-    {
-        blurColor = GammaCorrection(blurColor, Gamma);
-    }
-
-    float avg = (blurColor.r + blurColor.g + blurColor.b) / 3.0;
-
-    float exposure = lerp(0.1, 1.0, avg);
-
     if (ApplyToneMapping)
     {
         mainColor = ToneMapping(mainColor, Exposure);
