@@ -16,10 +16,16 @@ namespace PBR;
 public class PBRDemo : Game
 {
     private bool _isLightOn;
-    private float _lightIntensity = 3.5f;
+    private float _lightIntensity = 2.0f;
+
     private bool _applyGammaCorrection;
-    private bool _showOnlyBlurPart;
+    private float _gamma = 2.2f;
+
+    private bool _applyToneMapping;
+    private float _exposure = 1.0f;
+
     private bool _applyBlur;
+    private bool _showOnlyBlurPart;
     private int _blurPasses = 10;
 
     private float _lightDirectionAngle;
@@ -167,12 +173,16 @@ public class PBRDemo : Game
         _pbrEffectManager.LightColor = new Color(255, 251, 215).ToVector3();
         _pbrEffectManager.AmbientColor = new Vector3(0.02f, 0.02f, 0.02f);
         _pbrEffectManager.EmissiveColor = Vector3.Zero;
-        _pbrEffectManager.LightIntensity = 3.5f;
+        _pbrEffectManager.LightIntensity = _lightIntensity;
+        _pbrEffectManager.Gamma = _gamma;
 
         _blurEffectManager.TexelSize = new Vector2(1.0f / _graphics.PreferredBackBufferWidth,
             1.0f / _graphics.PreferredBackBufferHeight);
         _blurEffectManager.HorizontalPass = true;
         _blurEffectManager.GaussianWeights = new[] { 0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f };
+
+        _mergeBlurEffectManager.Gamma = _gamma;
+        _mergeBlurEffectManager.Exposure = _exposure;
 
         _baseEffect = new BasicEffect(GraphicsDevice)
         {
@@ -227,14 +237,17 @@ public class PBRDemo : Game
 
         _spriteBatch.Begin();
         _spriteBatch.DrawString(_font, $"FPS: {_fpsCounter.Fps:n2}", new Vector2(10, 10), Color.White);
-        _spriteBatch.DrawString(_font, $"Wireframe: {_wireFrameManager.IsWireFrame}", new Vector2(10, 30), Color.White);
-        _spriteBatch.DrawString(_font, $"Gamma correction: {_applyGammaCorrection}", new Vector2(10, 50), Color.White);
-        _spriteBatch.DrawString(_font, $"Light: {(_isLightOn ? "ON" : "OFF")}", new Vector2(10, 70), Color.White);
-        _spriteBatch.DrawString(_font, $"Light intensity (Z) - (X): {_lightIntensity:n2}", new Vector2(10, 90), Color.White);
-        _spriteBatch.DrawString(_font, $"Base reflectivity (I) - (O): {_pbrEffectManager.BaseReflectivity:n2}", new Vector2(10, 110), Color.White);
-        _spriteBatch.DrawString(_font, $"Blur (B): {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 130), Color.White);
+        _spriteBatch.DrawString(_font, $"Wireframe (W): {_wireFrameManager.IsWireFrame}", new Vector2(10, 30), Color.White);
+        _spriteBatch.DrawString(_font, $"Gamma correction (G): {(_applyGammaCorrection ? "ON" : "OFF")}", new Vector2(10, 50), Color.White);
+        _spriteBatch.DrawString(_font, $"Gamma (F) - (H): {_gamma:n2}", new Vector2(10, 70), Color.White);
+        _spriteBatch.DrawString(_font, $"Tone mapping (T): {(_applyToneMapping ? "ON" : "OFF")}", new Vector2(10, 90), Color.White);
+        _spriteBatch.DrawString(_font, $"Exposure (R) - (Y): {_exposure:n2}", new Vector2(10, 110), Color.White);
+        _spriteBatch.DrawString(_font, $"Light (X): {(_isLightOn ? "ON" : "OFF")}", new Vector2(10, 130), Color.White);
+        _spriteBatch.DrawString(_font, $"Light intensity (Z) - (C): {_lightIntensity:n2}", new Vector2(10, 150), Color.White);
+        _spriteBatch.DrawString(_font, $"Base reflectivity (I) - (O): {_pbrEffectManager.BaseReflectivity:n2}", new Vector2(10, 170), Color.White);
+        _spriteBatch.DrawString(_font, $"Blur (B): {(_applyBlur ? "ON" : "OFF")}", new Vector2(10, 190), Color.White);
         if (_applyBlur)
-            _spriteBatch.DrawString(_font, $"Blur passes (V) - (N): {_blurPasses}", new Vector2(10, 150), Color.White);
+            _spriteBatch.DrawString(_font, $"Blur passes (V) - (N): {_blurPasses}", new Vector2(10, 210), Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -337,11 +350,14 @@ public class PBRDemo : Game
         KeyboardManager.Update();
         MouseManager.Update();
 
+        #region Wireframe
         // Wireframe mode
         if (KeyboardManager.IsKeyPressed(Keys.W)) _wireFrameManager.ToggleWireFrame();
+        #endregion
 
+        #region Light
         // Light on/off
-        if (KeyboardManager.IsKeyPressed(Keys.L))
+        if (KeyboardManager.IsKeyPressed(Keys.X))
         {
             _isLightOn = !_isLightOn;
             _pbrEffectManager.LightIntensity = _isLightOn ? _lightIntensity : 0.0f;
@@ -357,21 +373,70 @@ public class PBRDemo : Game
             _pbrEffectManager.LightIntensity = _lightIntensity;
         }
 
-        if (KeyboardManager.IsKeyPressed(Keys.X))
+        if (KeyboardManager.IsKeyPressed(Keys.C))
         {
             _lightIntensity += 0.1f;
 
             _pbrEffectManager.LightIntensity = _lightIntensity;
         }
+        #endregion
 
+        #region Gamma correction
         // Gamma correction
         if (KeyboardManager.IsKeyPressed(Keys.G))
         {
             _applyGammaCorrection = !_applyGammaCorrection;
+
             _pbrEffectManager.ApplyGammaCorrection = _applyGammaCorrection;
             _mergeBlurEffectManager.ApplyGammaCorrection = _applyGammaCorrection;
         }
 
+        if (KeyboardManager.IsKeyPressed(Keys.F))
+        {
+            _gamma -= 0.1f;
+
+            if (_gamma <= 0) _gamma = 0.0f;
+
+            _pbrEffectManager.Gamma = _gamma;
+            _mergeBlurEffectManager.Gamma = _gamma;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.H))
+        {
+            _gamma += 0.1f;
+
+            _pbrEffectManager.Gamma = _gamma;
+            _mergeBlurEffectManager.Gamma = _gamma;
+        }
+        #endregion
+
+        #region Tone mapping
+        // Tone mapping
+        if (KeyboardManager.IsKeyPressed(Keys.T))
+        {
+            _applyToneMapping = !_applyToneMapping;
+
+            _mergeBlurEffectManager.ApplyToneMapping = _applyToneMapping;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.R))
+        {
+            _exposure -= 0.1f;
+
+            if (_exposure <= 0) _exposure = 0.0f;
+
+            _mergeBlurEffectManager.Exposure = _exposure;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.Y))
+        {
+            _exposure += 0.1f;
+
+            _mergeBlurEffectManager.Exposure = _exposure;
+        }
+        #endregion
+
+        #region Blur
         // Blur
         if (KeyboardManager.IsKeyPressed(Keys.Q)) _showOnlyBlurPart = !_showOnlyBlurPart;
 
@@ -390,7 +455,9 @@ public class PBRDemo : Game
 
             _blurPasses += 2;
         }
+        #endregion
 
+        #region Base reflectivity
         // Base reflectivity
         if (KeyboardManager.IsKeyPressed(Keys.I))
         {
@@ -405,7 +472,9 @@ public class PBRDemo : Game
 
             _pbrEffectManager.BaseReflectivity = br >= 1.0f ? 1.0f : br;
         }
+        #endregion
 
+        #region Light direction
         // Light direction
         if (KeyboardManager.IsKeyDown(Keys.OemComma))
         {
@@ -428,7 +497,9 @@ public class PBRDemo : Game
 
             UpdateLightVector();
         }
+        #endregion
 
+        #region Mesh rotation
         // Mesh rotation
         if (KeyboardManager.IsKeyDown(Keys.Up))
         {
@@ -457,5 +528,6 @@ public class PBRDemo : Game
 
             UpdateMeshRotation();
         }
+        #endregion
     }
 }

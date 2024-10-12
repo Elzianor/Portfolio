@@ -27,6 +27,28 @@ internal class MergeBlurEffectManager : BaseEffectManager
         }
     }
 
+    private float _gamma;
+    public float Gamma
+    {
+        get => _gamma;
+        set
+        {
+            _gamma = value;
+            Effect.Parameters["Gamma"].SetValue(_gamma);
+        }
+    }
+
+    private float _exposure;
+    public float Exposure
+    {
+        get => _exposure;
+        set
+        {
+            _exposure = value;
+            Effect.Parameters["Exposure"].SetValue(_exposure);
+        }
+    }
+
     private bool _applyGammaCorrection;
     public bool ApplyGammaCorrection
     {
@@ -35,6 +57,17 @@ internal class MergeBlurEffectManager : BaseEffectManager
         {
             _applyGammaCorrection = value;
             Effect.Parameters["ApplyGammaCorrection"].SetValue(_applyGammaCorrection);
+        }
+    }
+
+    private bool _applyToneMapping;
+    public bool ApplyToneMapping
+    {
+        get => _applyToneMapping;
+        set
+        {
+            _applyToneMapping = value;
+            Effect.Parameters["ApplyToneMapping"].SetValue(_applyToneMapping);
         }
     }
 

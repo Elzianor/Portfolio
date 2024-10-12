@@ -30,6 +30,7 @@ cbuffer Lighting
     int ParallaxMaxSteps;
 
     bool ApplyGammaCorrection;
+    float Gamma;
 }
 
 cbuffer Textures
@@ -193,10 +194,10 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     if (ApplyGammaCorrection)
     {
-        material.DiffuseColor = InverseGammaCorrection(material.DiffuseColor, 2.2);
-        material.EmissiveColor = InverseGammaCorrection(material.EmissiveColor, 2.2);
-        LightColor = InverseGammaCorrection(LightColor, 2.2);
-        AmbientColor = InverseGammaCorrection(AmbientColor, 2.2);
+        material.DiffuseColor = InverseGammaCorrection(material.DiffuseColor, Gamma);
+        material.EmissiveColor = InverseGammaCorrection(material.EmissiveColor, Gamma);
+        LightColor = InverseGammaCorrection(LightColor, Gamma);
+        AmbientColor = InverseGammaCorrection(AmbientColor, Gamma);
     }
 
     float3 color = PBR(normal, lightDirection, viewDirection, halfDirection, material, LightColor, AmbientColor);
@@ -207,7 +208,7 @@ PixelShaderOutput PS(VertexShaderOutput input)
 
     //if (brightness > 1.0)
 
-    if (material.Metallic > 0.7)
+    if (color.r > 0.95 && color.g > 0.95 && color.b > 0.95)
     {
         output.TargetBlur = float4(color, 1.0);
     }

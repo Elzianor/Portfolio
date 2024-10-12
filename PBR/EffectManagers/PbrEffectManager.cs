@@ -182,6 +182,17 @@ internal class PbrEffectManager : BaseEffectManager
         }
     }
 
+    private float _gamma;
+    public float Gamma
+    {
+        get => _gamma;
+        set
+        {
+            _gamma = value;
+            Effect.Parameters["Gamma"].SetValue(_gamma);
+        }
+    }
+
     public PbrEffectManager(ContentManager contentManager,
         string effectPath)
         : base(contentManager, effectPath)
