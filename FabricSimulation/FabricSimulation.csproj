@@ -11,14 +11,15 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="BerylliumMath" Version="0.0.2" />
-    <PackageReference Include="BerylliumMonoInput" Version="1.0.3" />
-    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
-  </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />
   </Target>
+  <ItemGroup>
+    <PackageReference Include="BerylliumCamera" Version="0.0.1" />
+    <PackageReference Include="BerylliumFrameRateCounter" Version="1.0.0" />
+    <PackageReference Include="BerylliumMath" Version="0.0.3" />
+    <PackageReference Include="BerylliumMonoInput" Version="1.0.5" />
+    <PackageReference Include="BerylliumShapingFunctions" Version="1.0.2" />
+  </ItemGroup>
 </Project>

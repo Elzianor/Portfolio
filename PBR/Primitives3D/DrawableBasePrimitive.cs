@@ -1,15 +1,31 @@
 ﻿using Beryllium.VertexTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
-namespace PBR.Primitives3D
+namespace Beryllium.Primitives3D
 {
-    public abstract class DrawableBasePrimitive
+    public abstract class DrawableBasePrimitive(GraphicsDevice graphicsDevice)
     {
         public VertexPositionNormalTangentTexture[] Vertices { get; protected set; }
         public int[] Indices { get; protected set; }
+        public Vector3 Position {get; set; }
+
+        public virtual void Draw(Effect effect)
+        {
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+
+                graphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.TriangleList,
+                    Vertices,
+                    0,
+                    Vertices.Length,
+                    Indices,
+                    0,
+                    Indices.Length / 3
+                );
+            }
+        }
     }
 }

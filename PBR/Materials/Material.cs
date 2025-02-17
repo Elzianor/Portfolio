@@ -12,7 +12,6 @@ public class SolidColorProperties
 {
     public Vector3 DiffuseColor { get; set; }
     public Vector3 EmissiveColor { get; set; }
-    public Vector3 AmbientColor { get; set; }
     public float Roughness { get; set; }
     public float Metallic { get; set; }
 }
@@ -62,13 +61,13 @@ public class Material
 
     public void TryLoadTextures(ContentManager contentManager)
     {
-        DiffuseMapTexture = LoadTexture(contentManager, TextureProperties.DiffuseTexturePath);
-        NormalMapTexture = LoadTexture(contentManager, TextureProperties.NormalTexturePath);
-        HeightMapTexture = LoadTexture(contentManager, TextureProperties.HeightTexturePath);
-        RoughnessMapTexture = LoadTexture(contentManager, TextureProperties.RoughnessTexturePath);
-        MetallicMapTexture = LoadTexture(contentManager, TextureProperties.MetallicTexturePath);
-        AmbientOcclusionMapTexture = LoadTexture(contentManager, TextureProperties.AmbientOcclusionTexturePath);
-        EmissiveMapTexture = LoadTexture(contentManager, TextureProperties.EmissiveTexturePath);
+        DiffuseMapTexture = LoadTexture(contentManager, TextureProperties?.DiffuseTexturePath);
+        NormalMapTexture = LoadTexture(contentManager, TextureProperties?.NormalTexturePath);
+        HeightMapTexture = LoadTexture(contentManager, TextureProperties?.HeightTexturePath);
+        RoughnessMapTexture = LoadTexture(contentManager, TextureProperties?.RoughnessTexturePath);
+        MetallicMapTexture = LoadTexture(contentManager, TextureProperties?.MetallicTexturePath);
+        AmbientOcclusionMapTexture = LoadTexture(contentManager, TextureProperties?.AmbientOcclusionTexturePath);
+        EmissiveMapTexture = LoadTexture(contentManager, TextureProperties?.EmissiveTexturePath);
     }
 
     private Texture2D LoadTexture(ContentManager contentManager, string texturePath)

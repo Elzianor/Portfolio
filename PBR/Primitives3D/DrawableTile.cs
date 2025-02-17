@@ -2,11 +2,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace PBR.Primitives3D;
+namespace Beryllium.Primitives3D;
 
 internal class DrawableTile : DrawableBasePrimitive
 {
-    public DrawableTile()
+    public DrawableTile(GraphicsDevice graphicsDevice, float sizeCoefficient)
+        : base(graphicsDevice)
     {
         Vertices = new VertexPositionNormalTangentTexture[4];
         Indices = new []
@@ -25,9 +26,11 @@ internal class DrawableTile : DrawableBasePrimitive
             Vertices[i].Normal = new Vector3(0, 1, 0);
             Vertices[i].Tangent = new Vector3(1, 0, 0);
         }
+
+        Generate(sizeCoefficient);
     }
 
-    public void Generate(float sizeCoefficient)
+    private void Generate(float sizeCoefficient)
     {
         Vertices[0].Position = new Vector3(-1, 0, 1);  // Bottom left
         Vertices[1].Position = new Vector3(-1, 0, -1); // Top left

@@ -1,8 +1,8 @@
-﻿using Beryllium.VertexTypes;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using PBR.Primitives3D;
+using Beryllium.VertexTypes;
 
 namespace Beryllium.Primitives3D;
 
@@ -28,7 +28,14 @@ public class DrawableSphere : DrawableBasePrimitive
     private readonly List<SphereVertex> _vertices = new();
     private readonly List<int> _indices = new();
 
-    public void Generate(int radius, int longitudeSegments, int latitudeSegments, float uvCoefficient)
+    public DrawableSphere(GraphicsDevice graphicsDevice,
+        float radius, int longitudeSegments, int latitudeSegments, float uvCoefficient)
+        : base(graphicsDevice)
+    {
+        Generate(radius, longitudeSegments, latitudeSegments, uvCoefficient);
+    }
+
+    private void Generate(float radius, int longitudeSegments, int latitudeSegments, float uvCoefficient)
     {
         _vertices.Clear();
         _indices.Clear();

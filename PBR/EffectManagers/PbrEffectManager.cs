@@ -17,7 +17,7 @@ internal class PbrEffectManager : EffectManagerBase
             //Effect.Parameters["AmbientColor"].SetValue(_material.SolidColorProperties.AmbientColor);
 
             Effect.Parameters["DiffuseMapTexture"].SetValue(_material.DiffuseMapTexture);
-            Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
+            /*Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
             Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
             Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
             Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
@@ -30,7 +30,7 @@ internal class PbrEffectManager : EffectManagerBase
             Effect.Parameters["ParallaxMaxSteps"].SetValue(_material.TextureProperties.ParallaxMaxSteps);
             Effect.Parameters["ParallaxHeightScale"].SetValue(_material.TextureProperties.ParallaxHeightScale);
 
-            Effect.Parameters["BaseReflectivity"].SetValue(_material.BaseReflectivity);
+            Effect.Parameters["BaseReflectivity"].SetValue(_material.BaseReflectivity);*/
         }
     }
 
