@@ -38,6 +38,8 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
 
             if (_material.TexturedProperties != null)
             {
+                _material.TryLoadTextures(contentManager);
+
                 Effect.Parameters["DiffuseMapTexture"].SetValue(_material.DiffuseMapTexture);
                 Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
                 Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
@@ -183,7 +185,6 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
         set
         {
             _lightPosition = value;
-            _lightPosition.Normalize();
             RecalculateLightPosition();
         }
     }

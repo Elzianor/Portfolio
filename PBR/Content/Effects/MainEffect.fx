@@ -307,8 +307,7 @@ float4 PSTextured(VertexShaderOutputTextured input) : SV_TARGET
 
     float3 normal = tex2D(NormalMapTextureSampler, parallaxUV).xyz;
     normal = normal * 2.0 - 1.0;
-    if (InvertNormalYAxis)
-        normal.y = -normal.y;
+    if (InvertNormalYAxis) normal.y = -normal.y;
     normal = normalize(normal);
 
     MaterialProperties material;

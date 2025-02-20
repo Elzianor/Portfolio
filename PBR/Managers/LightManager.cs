@@ -18,23 +18,27 @@ internal class LightManager
         set => _pbrEffectManager.LightType = value;
     }
 
+    private Vector3 _lightDirection;
     public Vector3 LightDirection
     {
-        get => _pbrEffectManager.LightDirection;
+        get => _lightDirection;
         set
         {
             value.Normalize();
 
+            _lightDirection = value;
             _pbrEffectManager.LightDirection = value;
             _representation.LightDirection = value;
         }
     }
 
+    private Vector3 _lightPosition;
     public Vector3 LightPosition
     {
-        get => _pbrEffectManager.LightPosition;
+        get => _lightPosition;
         set
         {
+            _lightPosition = value;
             _pbrEffectManager.LightPosition = value;
             _representation.Position = value;
         }

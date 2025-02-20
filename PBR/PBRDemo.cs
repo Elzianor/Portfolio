@@ -31,7 +31,7 @@ public class PBRDemo : Game
 
     //private DrawableTile _drawableTile;
     //private DrawableSphere _drawableSphere;
-    //private CoordinateAxes _coordinateAxes;
+    private CoordinateAxes _coordinateAxes;
 
     public PBRDemo()
     {
@@ -63,7 +63,7 @@ public class PBRDemo : Game
 
         _pbrEffectManager = new PbrEffectManager(Content, @"Effects\MainEffect")
         {
-            /*Material = new Material(materialFolder)
+            Material = new Material(materialFolder)
             {
                 TexturedProperties = new TexturedProperties
                 {
@@ -75,13 +75,13 @@ public class PBRDemo : Game
                     AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
                     InvertNormalYAxis = true,
                     IsDepthMap = false,
-                    ParallaxMinSteps = 0,
-                    ParallaxMaxSteps = 0,
-                    ParallaxHeightScale = 0.0f,
+                    ParallaxMinSteps = 10,
+                    ParallaxMaxSteps = 30,
+                    ParallaxHeightScale = 0.025f,
                 },
-                BaseReflectivity = 0.0f
-            },*/
-            Material = new Material("Solid")
+                BaseReflectivity = 0.04f
+            },
+            /*Material = new Material("Solid")
             {
                 SolidColorProperties = new SolidColorProperties
                 {
@@ -90,7 +90,7 @@ public class PBRDemo : Game
                     Roughness = 0.5f
                 },
                 BaseReflectivity = 0.04f
-            },
+            },*/
             Gamma = 2.2f,
             ApplyGammaCorrection = true
         };
@@ -122,7 +122,7 @@ public class PBRDemo : Game
             LightType = LightType.Directional
         };
 
-        //_coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
+        _coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
 
         base.Initialize();
     }
@@ -163,7 +163,7 @@ public class PBRDemo : Game
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-        _pbrEffectManager.ApplyTechnique("Solid").ApplyPass();
+        _pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
         _texturedXZPlane.Draw(_pbrEffectManager.Effect);
 
         _lightManager.Draw();
