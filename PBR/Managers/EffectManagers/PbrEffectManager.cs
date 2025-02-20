@@ -1,4 +1,6 @@
-﻿using Beryllium.Materials;
+﻿using System;
+using Beryllium.Camera;
+using Beryllium.Materials;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -138,25 +140,27 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
         }
     }
 
-    private float _cutOffInner;
-    public float CutOffInner
+    private float _cutOffInnerDegrees;
+    public float CutOffInnerDegrees
     {
-        get => _cutOffInner;
+        get => _cutOffInnerDegrees;
         set
         {
-            _cutOffInner = value;
-            Effect.Parameters["CutOffInner"].SetValue(_cutOffInner);
+            _cutOffInnerDegrees = value;
+            Effect.Parameters["CutOffInner"].SetValue(
+                (float)Math.Cos(MathHelper.ToRadians(_cutOffInnerDegrees / 2.0f)));
         }
     }
 
-    private float _cutOffOuter;
-    public float CutOffOuter
+    private float _cutOffOuterDegrees;
+    public float CutOffOuterDegrees
     {
-        get => _cutOffOuter;
+        get => _cutOffOuterDegrees;
         set
         {
-            _cutOffOuter = value;
-            Effect.Parameters["CutOffOuter"].SetValue(_cutOffOuter);
+            _cutOffOuterDegrees = value;
+            Effect.Parameters["CutOffOuter"].SetValue(
+                (float)Math.Cos(MathHelper.ToRadians(_cutOffOuterDegrees / 2.0f)));
         }
     }
 
@@ -242,6 +246,15 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
     }
     #endregion
 
+    #region Update
+    public void Update(Camera camera)
+    {
+        WorldMatrix = camera.OffsetWorldMatrix;
+        ViewMatrix = camera.ViewMatrix;
+        ProjectionMatrix = camera.ProjectionMatrix;
+    }
+    #endregion
+
     #region Recalculations
     private void RecalculateMatrices()
     {
@@ -264,7 +277,7 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
 
     private void RecalculateLightDirection()
     {
-        var ld = Vector3.TransformNormal(LightDirection, _worldViewInverseTransposeMatrix);
+        var ld = Vector3.TransformNormal(_lightDirection, _worldViewInverseTransposeMatrix);
         ld.Normalize();
 
         Effect.Parameters["WorldViewLightDirection"].SetValue(ld);
@@ -272,7 +285,7 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
 
     private void RecalculateLightPosition()
     {
-        var lp = Vector3.Transform(LightPosition, _worldViewMatrix);
+        var lp = Vector3.Transform(_lightPosition, _worldViewMatrix);
 
         Effect.Parameters["WorldViewLightPosition"].SetValue(lp);
     }

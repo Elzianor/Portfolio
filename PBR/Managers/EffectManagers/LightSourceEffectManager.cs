@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Beryllium.Camera;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
 namespace PBR.EffectManagers;
@@ -51,6 +52,15 @@ internal class LightSourceEffectManager(ContentManager contentManager, string ef
             _lightColor = value;
             Effect.Parameters["LightColor"].SetValue(_lightColor);
         }
+    }
+    #endregion
+
+    #region Update
+    public void Update(Camera camera, Vector3 position)
+    {
+        WorldMatrix = Matrix.CreateTranslation(position - camera.Offset);
+        ViewMatrix = camera.ViewMatrix;
+        ProjectionMatrix = camera.ProjectionMatrix;
     }
     #endregion
 

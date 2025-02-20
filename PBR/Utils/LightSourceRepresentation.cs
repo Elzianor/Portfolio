@@ -19,6 +19,7 @@ internal class LightSourceRepresentation
         set
         {
             _lightDirection = value;
+            _lightDirection.Normalize();
             UpdateDirectionProjection();
         }
     }
@@ -57,13 +58,11 @@ internal class LightSourceRepresentation
     }
 
     #region Draw
-    public void DrawRepresentation(Effect effect)
-    {
-        _representation.Draw(effect);
-    }
 
-    public void DrawProjections()
+    public void Draw(Effect lightSourceEffect)
     {
+        _representation.Draw(lightSourceEffect);
+
         _projectionsEffect.CurrentTechnique.Passes[0].Apply();
 
         _graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList,

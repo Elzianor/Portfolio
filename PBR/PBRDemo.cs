@@ -54,7 +54,7 @@ public class PBRDemo : Game
             Vector3.Up,
             _graphics.PreferredBackBufferWidth,
             _graphics.PreferredBackBufferHeight,
-            movementVelocity: 3,
+            movementVelocity: 20,
             rotationVelocity: 100,
             zNear: 0.1f,
             zFar: 1000f);
@@ -63,16 +63,16 @@ public class PBRDemo : Game
 
         _pbrEffectManager = new PbrEffectManager(Content, @"Effects\MainEffect")
         {
-            Material = new Material(materialFolder)
+            /*Material = new Material(materialFolder)
             {
                 TexturedProperties = new TexturedProperties
                 {
-                    DiffuseTexturePath = @$"Textures\{materialFolder}\Diffuse",
-                    NormalTexturePath = @$"Textures\{materialFolder}\Normal",
-                    HeightTexturePath = @$"Textures\{materialFolder}\Height",
-                    RoughnessTexturePath = @$"Textures\{materialFolder}\Roughness",
-                    MetallicTexturePath = @$"Textures\{materialFolder}\Metallic",
-                    AmbientOcclusionTexturePath = @$"Textures\{materialFolder}\AO",
+                    DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
+                    NormalTexturePath = @$"Material\{materialFolder}\Normal",
+                    HeightTexturePath = @$"Material\{materialFolder}\Height",
+                    RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
+                    MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
+                    AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
                     InvertNormalYAxis = true,
                     IsDepthMap = false,
                     ParallaxMinSteps = 0,
@@ -80,8 +80,8 @@ public class PBRDemo : Game
                     ParallaxHeightScale = 0.0f,
                 },
                 BaseReflectivity = 0.0f
-            },
-            /*Material = new Material("Solid")
+            },*/
+            Material = new Material("Solid")
             {
                 SolidColorProperties = new SolidColorProperties
                 {
@@ -90,11 +90,7 @@ public class PBRDemo : Game
                     Roughness = 0.5f
                 },
                 BaseReflectivity = 0.04f
-            },*/
-            LightDirection = new Vector3(1, -0.5f, 0),
-            LightColor = Color.White.ToVector3(),
-            AmbientColor = Color.White.ToVector3() * 0.03f,
-            LightIntensity = 1.0f,
+            },
             Gamma = 2.2f,
             ApplyGammaCorrection = true
         };
@@ -111,10 +107,20 @@ public class PBRDemo : Game
             _lightSourceEffectManager,
             new LightSourceRepresentation(GraphicsDevice,
                 new DrawableSphere(GraphicsDevice,
-                    0.05f, 8, 8, 0)
-                {
-                    Position = new Vector3(0, 1, 0)
-                }));
+                    0.05f, 8, 8, 0)))
+        {
+            LightDirection = new Vector3(1, -0.5f, 0),
+            LightPosition = new Vector3(0, 1, 0),
+            LightColor = Color.White.ToVector3(),
+            LightIntensity = 1.0f,
+            AmbientColor = Color.White.ToVector3() * 0.03f,
+            Constant = 1.0f,
+            Linear = 0.09f,
+            Quadratic = 0.032f,
+            CutOffInnerDegrees = 25,
+            CutOffOuterDegrees = 35,
+            LightType = LightType.Directional
+        };
 
         //_coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
 
@@ -142,15 +148,7 @@ public class PBRDemo : Game
 
         HandleInput();
 
-        _pbrEffectManager.WorldMatrix = Matrix.CreateTranslation(_texturedXZPlane.Position - _camera.Offset);
-        _pbrEffectManager.ViewMatrix = _camera.ViewMatrix;
-        _pbrEffectManager.ProjectionMatrix = _camera.ProjectionMatrix;
-        _pbrEffectManager.LightSourceWorldMatrix = Matrix.CreateTranslation(
-            _lightSourceRepresentation.Position - _camera.Offset);
-
-        _basicEffect.World = _pbrEffectManager.LightSourceWorldMatrix;
-        _basicEffect.View = _camera.ViewMatrix;
-        _basicEffect.Projection = _camera.ProjectionMatrix;
+        _lightManager.Update(_camera);
 
         /*_coordinateAxes.Update(_camera.OffsetWorldMatrix,
             _camera.ViewMatrix,
@@ -165,20 +163,18 @@ public class PBRDemo : Game
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-        _pbrEffectManager.ApplyTechnique("Textured");
-        _pbrEffectManager.ApplyPass();
-
+        _pbrEffectManager.ApplyTechnique("Solid").ApplyPass();
         _texturedXZPlane.Draw(_pbrEffectManager.Effect);
-        _lightSourceRepresentation.Draw(_pbrEffectManager.LightSourceEffectManager.Effect);
 
-        _basicEffect.CurrentTechnique.Passes[0].Apply();
-        GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, _lightPositionProjection, 0, 1);
+        _lightManager.Draw();
 
         //_coordinateAxes.Draw();
 
         _spriteBatch.Begin();
         _nextStringPosition = 10;
         DrawNextString($"FPS: {FrameRateCounter.FrameRate:n2}");
+        DrawNextString($"FOV: {_camera.FovDegrees} degrees");
+        DrawNextString($"Light type: {_lightManager.LightType}");
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -206,6 +202,33 @@ public class PBRDemo : Game
 
     private void HandleInput()
     {
+        if (KeyboardManager.IsKeyPressed(Keys.D1))
+        {
+            _lightManager.LightType = LightType.Directional;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.D2))
+        {
+            _lightManager.LightType = LightType.Point;
+        }
+
+        if (KeyboardManager.IsKeyPressed(Keys.D3))
+        {
+            _lightManager.LightType = LightType.Spot;
+        }
+
+        if (MouseManager.MouseStatus.WheelDelta > 0)
+        {
+            if (_camera.FovDegrees > 1)
+                _camera.FovDegrees--;
+        }
+
+        if (MouseManager.MouseStatus.WheelDelta < 0)
+        {
+            if (_camera.FovDegrees < 120)
+                _camera.FovDegrees++;
+        }
+
         if (MouseManager.MouseStatus.MiddleButton.Down)
         {
             var rayPlaneIntersectionPoint = RayCalculations.GetRayPlaneIntersectionPoint(
@@ -213,7 +236,7 @@ public class PBRDemo : Game
 
             if (rayPlaneIntersectionPoint != null)
             {
-                _lightManager.LightDirection = rayPlaneIntersectionPoint.Value;
+                _lightManager.LightDirection = rayPlaneIntersectionPoint.Value - _lightManager.LightPosition;
             }
         }
 

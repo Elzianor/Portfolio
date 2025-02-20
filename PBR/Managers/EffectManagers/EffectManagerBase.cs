@@ -12,12 +12,19 @@ public abstract class EffectManagerBase
         Effect = contentManager.Load<Effect>(effectPath);
     }
 
-    public void ApplyPass(string techniqueName = "", int pass = 0)
+    public EffectManagerBase ApplyTechnique(string techniqueName)
     {
-        var technique = string.IsNullOrWhiteSpace(techniqueName) ?
-            Effect.CurrentTechnique :
-            Effect.Techniques[techniqueName];
+        if (!string.IsNullOrEmpty(techniqueName))
+            Effect.CurrentTechnique = Effect.Techniques[techniqueName];
 
-        technique.Passes[pass].Apply();
+        return this;
+    }
+
+    public void ApplyPass(string passName = "")
+    {
+        if (!string.IsNullOrEmpty(passName))
+            Effect.CurrentTechnique.Passes[passName].Apply();
+        else
+            Effect.CurrentTechnique.Passes[0].Apply();
     }
 }

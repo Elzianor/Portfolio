@@ -13,13 +13,6 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin defaultFont.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:defaultFont.spritefont
-
 #begin Effects/LightSourceEffect.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -31,6 +24,13 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Effects/MainEffect.fx
+
+#begin Fonts/defaultFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/defaultFont.spritefont
 
 #begin Material/Bricks/AO.png
 /importer:TextureImporter
