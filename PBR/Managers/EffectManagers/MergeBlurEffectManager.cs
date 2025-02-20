@@ -1,5 +1,4 @@
-﻿using Beryllium.EffectManagers;
-using Microsoft.Xna.Framework.Content;
+﻿using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace PBR.EffectManagers;

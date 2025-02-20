@@ -16,7 +16,7 @@ public class SolidColorProperties
     public float Metallic { get; set; }
 }
 
-public class TextureProperties
+public class TexturedProperties
 {
     public string DiffuseTexturePath { get; set; }
     public string NormalTexturePath { get; set; }
@@ -51,7 +51,7 @@ public class Material
 
     public string Name { get; set; }
     public SolidColorProperties SolidColorProperties { get; set; }
-    public TextureProperties TextureProperties { get; set; }
+    public TexturedProperties TexturedProperties { get; set; }
     public float BaseReflectivity { get; set; }
 
     public Material(string name = "")
@@ -61,13 +61,13 @@ public class Material
 
     public void TryLoadTextures(ContentManager contentManager)
     {
-        DiffuseMapTexture = LoadTexture(contentManager, TextureProperties?.DiffuseTexturePath);
-        NormalMapTexture = LoadTexture(contentManager, TextureProperties?.NormalTexturePath);
-        HeightMapTexture = LoadTexture(contentManager, TextureProperties?.HeightTexturePath);
-        RoughnessMapTexture = LoadTexture(contentManager, TextureProperties?.RoughnessTexturePath);
-        MetallicMapTexture = LoadTexture(contentManager, TextureProperties?.MetallicTexturePath);
-        AmbientOcclusionMapTexture = LoadTexture(contentManager, TextureProperties?.AmbientOcclusionTexturePath);
-        EmissiveMapTexture = LoadTexture(contentManager, TextureProperties?.EmissiveTexturePath);
+        DiffuseMapTexture = LoadTexture(contentManager, TexturedProperties?.DiffuseTexturePath);
+        NormalMapTexture = LoadTexture(contentManager, TexturedProperties?.NormalTexturePath);
+        HeightMapTexture = LoadTexture(contentManager, TexturedProperties?.HeightTexturePath);
+        RoughnessMapTexture = LoadTexture(contentManager, TexturedProperties?.RoughnessTexturePath);
+        MetallicMapTexture = LoadTexture(contentManager, TexturedProperties?.MetallicTexturePath);
+        AmbientOcclusionMapTexture = LoadTexture(contentManager, TexturedProperties?.AmbientOcclusionTexturePath);
+        EmissiveMapTexture = LoadTexture(contentManager, TexturedProperties?.EmissiveTexturePath);
     }
 
     private Texture2D LoadTexture(ContentManager contentManager, string texturePath)
