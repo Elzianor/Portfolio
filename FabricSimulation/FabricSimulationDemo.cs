@@ -1,4 +1,5 @@
-﻿using Beryllium.MonoInput.KeyboardInput;
+﻿using Beryllium.FrameRateCounter;
+using Beryllium.MonoInput.KeyboardInput;
 using Beryllium.MonoInput.MouseInput;
 using Beryllium.Physics;
 using Microsoft.Xna.Framework;
@@ -14,9 +15,10 @@ public class FabricSimulationDemo : Game
     private const int Height = 50;
     private const float Step = 0.1f;
 
-    private const float Mass = 0.01f;
+    private const float Mass = 0.1f;
 
-    private const float AnimationSpeedMultiplier = 1.0f / 1.5f;
+    private float _currentElapsedTimeSeconds;
+    private const float PhysicsUpdateTimeStep = 0.001f;
 
     private readonly Vector3 _sphereCenter = new(3.0f, -1.5f, -3.0f);
     private const float SphereRadius = 1.0f;
@@ -24,10 +26,6 @@ public class FabricSimulationDemo : Game
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SpriteFont _font;
-
-    private double _fps;
-    private double _frameCnt;
-    private double _elapsedFramesTimeSec;
 
     private Matrix _worldMatrix;
     private Matrix _viewMatrix;
@@ -107,14 +105,21 @@ public class FabricSimulationDemo : Game
             Exit();
 
         // TODO: Add your update logic here
-        CalculateFps(gameTime);
+        FrameRateCounter.Update(gameTime.ElapsedGameTime.TotalSeconds);
 
         HandleInputs();
 
         if (_simulationRunning)
         {
-            _fabric.Update((float)gameTime.ElapsedGameTime.TotalSeconds * AnimationSpeedMultiplier);
-            UpdateVertices();
+            _currentElapsedTimeSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_currentElapsedTimeSeconds >= PhysicsUpdateTimeStep)
+            {
+                _fabric.Update(PhysicsUpdateTimeStep);
+                UpdateVertices();
+
+                _currentElapsedTimeSeconds -= PhysicsUpdateTimeStep;
+            }
         }
 
         base.Update(gameTime);
@@ -137,7 +142,7 @@ public class FabricSimulationDemo : Game
         }
 
         _spriteBatch.Begin();
-        _spriteBatch.DrawString(_font, $"FPS: {_fps:n2}", new Vector2(10, 10), Color.White);
+        _spriteBatch.DrawString(_font, $"FPS: {FrameRateCounter.FrameRate:n2}", new Vector2(10, 10), Color.White);
         _spriteBatch.DrawString(_font, $"Simulation running: {_simulationRunning}", new Vector2(10, 30), Color.White);
         _spriteBatch.DrawString(_font, "Run/stop simulation: R", new Vector2(10, 50), Color.White);
         _spriteBatch.DrawString(_font, "Reset simulation: P", new Vector2(10, 70), Color.White);
@@ -293,18 +298,6 @@ public class FabricSimulationDemo : Game
         var vTangent = velocity - vDotN * sphereCenterDirection;
         var newVelocity = velocity - vTangent;
         newPosition += newVelocity * timeStep;
-    }
-
-    private void CalculateFps(GameTime gameTime)
-    {
-        _frameCnt++;
-        _elapsedFramesTimeSec += gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_elapsedFramesTimeSec < 0.5) return;
-
-        _fps = _frameCnt / _elapsedFramesTimeSec;
-        _frameCnt = 0;
-        _elapsedFramesTimeSec = 0;
     }
 
     private void SetupMatrices()

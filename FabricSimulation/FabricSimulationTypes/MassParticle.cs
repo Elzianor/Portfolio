@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace Beryllium.Physics;
@@ -39,7 +40,7 @@ public class MassParticle
 
         var nextVelocity = (nextPosition - Position) / (2 * _timeStep);
 
-        AdditionalConstraints?.Invoke(Position, ref nextPosition, nextVelocity, timeStep);
+        //AdditionalConstraints?.Invoke(Position, ref nextPosition, nextVelocity, timeStep);
 
         PrevPosition = Position;
         Position = nextPosition;

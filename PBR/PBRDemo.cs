@@ -1,6 +1,5 @@
 ﻿using Beryllium.Camera;
 using Beryllium.FrameRateCounter;
-using Beryllium.Materials;
 using Beryllium.MonoInput.KeyboardInput;
 using Beryllium.MonoInput.MouseInput;
 using Beryllium.Primitives3D;
@@ -10,11 +9,56 @@ using Microsoft.Xna.Framework.Input;
 using PBR.EffectManagers;
 using PBR.Managers;
 using PBR.Utils;
+using System;
+using System.Collections.Generic;
+using VertexBuffer = Microsoft.Xna.Framework.Graphics.VertexBuffer;
 
 namespace PBR;
 
+struct FabricParticle
+{
+    public Vector3 PrevPosition;
+    public Vector3 Position;
+    public bool IsPinned;
+};
+
 public class PBRDemo : Game
 {
+    // has to be the same as the GroupSize define in the compute shader
+    private const int ComputeGroupSize = 256;
+
+    private int _fabricParticlesGroupCount;
+
+    // stores all the particle information, will be updated by the compute shader
+    private StructuredBuffer _fabricParticlesInputBuffer;
+    private StructuredBuffer _fabricParticlesOutputBuffer;
+    // used for drawing the particles
+    private VertexBuffer _vertexBuffer;
+
+    private Effect _computeEffect;
+
+    private float _currentElapsedTimeSeconds;
+    private const float PhysicsUpdateTimeStep = 0.01f;
+
+    private const float FabricParticleMass = 0.01f;
+    private readonly Vector3 _gravitationalAcceleration = new (0, -9.8f, 0);
+
+    private const int FabricWidth = 25;
+    private const int FabricHeight = 25;
+    private const float FabricStep = 0.2f;
+
+    private const float FabricStructuralRestLength = FabricStep;
+    private readonly float _fabricShearingRestLength = (float)Math.Sqrt(2 * FabricStep * FabricStep);
+
+    private const float FabricDamping = 0.001f;
+    private const float FabricStiffness = 0.5f;
+
+    private const bool UseShearingConstraints = false;
+
+    private const int IterativeRelaxationStepCount = 10;
+
+    // ---------------------------
+
     private readonly Color _background = new(50, 50, 50);
 
     private readonly GraphicsDeviceManager _graphics;
@@ -29,8 +73,6 @@ public class PBRDemo : Game
     private TexturedXZPlane _texturedXZPlane;
     private LightManager _lightManager;
 
-    //private DrawableTile _drawableTile;
-    //private DrawableSphere _drawableSphere;
     private CoordinateAxes _coordinateAxes;
 
     public PBRDemo()
@@ -59,70 +101,99 @@ public class PBRDemo : Game
             zNear: 0.1f,
             zFar: 1000f);
 
-        var materialFolder = "WoodFloor";
+        //var materialFolder = "WoodFloor";
 
-        _pbrEffectManager = new PbrEffectManager(Content, @"Effects\MainEffect")
-        {
-            Material = new Material(materialFolder)
-            {
-                TexturedProperties = new TexturedProperties
-                {
-                    DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
-                    NormalTexturePath = @$"Material\{materialFolder}\Normal",
-                    HeightTexturePath = @$"Material\{materialFolder}\Height",
-                    RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
-                    MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
-                    AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
-                    InvertNormalYAxis = true,
-                    IsDepthMap = false,
-                    ParallaxMinSteps = 10,
-                    ParallaxMaxSteps = 30,
-                    ParallaxHeightScale = 0.025f,
-                },
-                BaseReflectivity = 0.04f
-            },
-            /*Material = new Material("Solid")
-            {
-                SolidColorProperties = new SolidColorProperties
-                {
-                    DiffuseColor = Color.Coral.ToVector3(),
-                    Metallic = 0.01f,
-                    Roughness = 0.5f
-                },
-                BaseReflectivity = 0.04f
-            },*/
-            Gamma = 2.2f,
-            ApplyGammaCorrection = true
-        };
+        //_pbrEffectManager = new PbrEffectManager(Content, @"Effects\MainEffect")
+        //{
+        //    Material = new Material(materialFolder)
+        //    {
+        //        TexturedProperties = new TexturedProperties
+        //        {
+        //            DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
+        //            NormalTexturePath = @$"Material\{materialFolder}\Normal",
+        //            HeightTexturePath = @$"Material\{materialFolder}\Height",
+        //            RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
+        //            MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
+        //            AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
+        //            InvertNormalYAxis = true,
+        //            IsDepthMap = false,
+        //            ParallaxMinSteps = 10,
+        //            ParallaxMaxSteps = 30,
+        //            ParallaxHeightScale = 0.025f,
+        //        },
+        //        BaseReflectivity = 0.04f
+        //    },
+        //    /*Material = new Material("Solid")
+        //    {
+        //        SolidColorProperties = new SolidColorProperties
+        //        {
+        //            DiffuseColor = Color.Coral.ToVector3(),
+        //            Metallic = 0.01f,
+        //            Roughness = 0.5f
+        //        },
+        //        BaseReflectivity = 0.04f
+        //    },*/
+        //    Gamma = 2.2f,
+        //    ApplyGammaCorrection = true
+        //};
 
-        _lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSourceEffect")
-        {
-            LightColor = _pbrEffectManager.LightColor
-        };
+        //_lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSourceEffect")
+        //{
+        //    LightColor = _pbrEffectManager.LightColor
+        //};
 
-        _texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
-        _texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
+        //_texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
+        //_texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
 
-        _lightManager = new LightManager(_pbrEffectManager,
-            _lightSourceEffectManager,
-            new LightSourceRepresentation(GraphicsDevice,
-                new DrawableSphere(GraphicsDevice,
-                    0.05f, 8, 8, 0)))
-        {
-            LightDirection = new Vector3(1, -0.5f, 0),
-            LightPosition = new Vector3(0, 1, 0),
-            LightColor = Color.White.ToVector3(),
-            LightIntensity = 1.0f,
-            AmbientColor = Color.White.ToVector3() * 0.03f,
-            Constant = 1.0f,
-            Linear = 0.09f,
-            Quadratic = 0.032f,
-            CutOffInnerDegrees = 25,
-            CutOffOuterDegrees = 35,
-            LightType = LightType.Directional
-        };
+        //_lightManager = new LightManager(_pbrEffectManager,
+        //    _lightSourceEffectManager,
+        //    new LightSourceRepresentation(GraphicsDevice,
+        //        new DrawableSphere(GraphicsDevice,
+        //            0.05f, 8, 8, 0)))
+        //{
+        //    LightDirection = new Vector3(1, -0.5f, 0),
+        //    LightPosition = new Vector3(0, 1, 0),
+        //    LightColor = Color.White.ToVector3(),
+        //    LightIntensity = 1.0f,
+        //    AmbientColor = Color.White.ToVector3() * 0.03f,
+        //    Constant = 1.0f,
+        //    Linear = 0.09f,
+        //    Quadratic = 0.032f,
+        //    CutOffInnerDegrees = 25,
+        //    CutOffOuterDegrees = 35,
+        //    LightType = LightType.Directional
+        //};
 
         _coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
+
+        // COMPUTE SHADER PART
+
+        _computeEffect = Content.Load<Effect>(@"Effects\FabricComputeEffect");
+
+        var particles = SetupFabricParticles();
+        _fabricParticlesGroupCount = (int)Math.Ceiling((double)particles.Count / ComputeGroupSize);
+        SetupBuffers(particles);
+
+        _computeEffect.Parameters["FabricParticlesInput"].SetValue(_fabricParticlesInputBuffer);
+        _computeEffect.Parameters["FabricParticlesOutput"].SetValue(_fabricParticlesOutputBuffer);
+
+        _computeEffect.Parameters["FabricParticlesCount"].SetValue((uint)particles.Count);
+
+        _computeEffect.Parameters["FabricParticleMass"].SetValue(FabricParticleMass);
+        _computeEffect.Parameters["GravitationalAcceleration"].SetValue(_gravitationalAcceleration);
+        _computeEffect.Parameters["PhysicsUpdateTimeStep"].SetValue(PhysicsUpdateTimeStep);
+
+        _computeEffect.Parameters["FabricWidthInParticles"].SetValue((uint)FabricWidth);
+        _computeEffect.Parameters["FabricHeightInParticles"].SetValue((uint)FabricHeight);
+        _computeEffect.Parameters["FabricStructuralRestLength"].SetValue(FabricStructuralRestLength);
+        _computeEffect.Parameters["FabricShearingRestLength"].SetValue(_fabricShearingRestLength);
+
+        _computeEffect.Parameters["FabricDamping"].SetValue(FabricDamping);
+        _computeEffect.Parameters["FabricStiffness"].SetValue(FabricStiffness);
+
+        _computeEffect.Parameters["UseShearingConstraints"].SetValue(UseShearingConstraints);
+
+        _computeEffect.Parameters["FabricParticlesReadOnly"].SetValue(_fabricParticlesOutputBuffer);
 
         base.Initialize();
     }
@@ -146,13 +217,13 @@ public class PBRDemo : Game
         HandleCameraInput();
         _camera.Update(gameTime);
 
-        HandleInput();
+        //HandleInput();
 
-        _lightManager.Update(_camera);
+        //_lightManager.Update(_camera);
 
-        /*_coordinateAxes.Update(_camera.OffsetWorldMatrix,
+        _coordinateAxes.Update(_camera.OffsetWorldMatrix,
             _camera.ViewMatrix,
-            _camera.ProjectionMatrix);*/
+            _camera.ProjectionMatrix);
 
         base.Update(gameTime);
     }
@@ -163,18 +234,20 @@ public class PBRDemo : Game
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-        _pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
+        /*_pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
         _texturedXZPlane.Draw(_pbrEffectManager.Effect);
 
-        _lightManager.Draw();
+        _lightManager.Draw();*/
 
+        ComputeFabricParticles(gameTime);
+        DrawParticles();
         //_coordinateAxes.Draw();
 
         _spriteBatch.Begin();
         _nextStringPosition = 10;
         DrawNextString($"FPS: {FrameRateCounter.FrameRate:n2}");
         DrawNextString($"FOV: {_camera.FovDegrees} degrees");
-        DrawNextString($"Light type: {_lightManager.LightType}");
+        //DrawNextString($"Light type: {_lightManager.LightType}");
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -261,5 +334,86 @@ public class PBRDemo : Game
             new Vector2(10, _nextStringPosition),
             Color.Green);
         _nextStringPosition += 20;
+    }
+
+    private List<FabricParticle> SetupFabricParticles()
+    {
+        var particles = new List<FabricParticle>();
+
+        for (var h = 0; h < FabricHeight; h++)
+        {
+            for (var w = 0; w < FabricWidth; w++)
+            {
+                var newParticle = new FabricParticle
+                {
+                    Position = new Vector3(w * FabricStep, 0, -h * FabricStep),
+                    PrevPosition = new Vector3(w * FabricStep, 0, -h * FabricStep),
+                    IsPinned = w == 0 && h == 0 ||
+                             w == FabricWidth - 1 && h == 0
+                };
+
+                particles.Add(newParticle);
+            }
+        }
+
+        return particles;
+    }
+
+    private void SetupBuffers(List<FabricParticle> particles)
+    {
+        _fabricParticlesInputBuffer = new StructuredBuffer(GraphicsDevice,
+            typeof(FabricParticle),
+            particles.Count,
+            BufferUsage.None,
+            ShaderAccess.ReadWrite);
+
+        _fabricParticlesOutputBuffer = new StructuredBuffer(GraphicsDevice,
+            typeof(FabricParticle),
+            particles.Count,
+            BufferUsage.None,
+            ShaderAccess.ReadWrite);
+
+        // no need to initialize, all the data for drawing the particles is coming from the structured buffer
+        _vertexBuffer = new VertexBuffer(GraphicsDevice,
+            typeof(VertexPositionTexture),
+            particles.Count,
+            BufferUsage.WriteOnly);
+
+        _fabricParticlesInputBuffer.SetData(particles.ToArray());
+    }
+
+    private void ComputeFabricParticles(GameTime gameTime)
+    {
+        _currentElapsedTimeSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_currentElapsedTimeSeconds < PhysicsUpdateTimeStep) return;
+
+        // Verlet pass
+        _computeEffect.CurrentTechnique.Passes["VerletPass"].ApplyCompute();
+        GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
+
+        // Constraints Pass
+        for (var i = 0; i < IterativeRelaxationStepCount; i++)
+        {
+            _computeEffect.CurrentTechnique.Passes["ConstraintsPass"].ApplyCompute();
+            GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
+
+            _computeEffect.CurrentTechnique.Passes["SwapPass"].ApplyCompute();
+            GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
+        }
+
+        _currentElapsedTimeSeconds -= PhysicsUpdateTimeStep;
+    }
+
+    private void DrawParticles()
+    {
+        var wvp = _camera.OffsetWorldMatrix * _camera.ViewMatrix * _camera.ProjectionMatrix;
+
+        _computeEffect.Parameters["WorldViewProjection"].SetValue(wvp);
+
+        _computeEffect.CurrentTechnique.Passes["RenderPass"].Apply();
+
+        GraphicsDevice.SetVertexBuffer(_vertexBuffer);
+        GraphicsDevice.DrawPrimitives(PrimitiveType.PointList, 0, FabricWidth * FabricHeight);
     }
 }

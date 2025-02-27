@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FabricSimulation", "FabricS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PBR", "PBR\PBR.csproj", "{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShaderSampleDX", "..\..\XNA_Examples\MonoGame-Shader-Samples-compute_cpu\MonoGame-Shader-Samples-compute_cpu\ShaderSampleDX.csproj", "{141CA7F4-2BB8-4B6D-97C0-07FC579BF5F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B5CBAD2-D0E9-48AC-837B-D9C3C7136F75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{141CA7F4-2BB8-4B6D-97C0-07FC579BF5F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{141CA7F4-2BB8-4B6D-97C0-07FC579BF5F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{141CA7F4-2BB8-4B6D-97C0-07FC579BF5F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{141CA7F4-2BB8-4B6D-97C0-07FC579BF5F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
