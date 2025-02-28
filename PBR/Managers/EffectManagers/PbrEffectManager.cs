@@ -41,12 +41,12 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
                 _material.TryLoadTextures(contentManager);
 
                 Effect.Parameters["DiffuseMapTexture"].SetValue(_material.DiffuseMapTexture);
-                Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
-                Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
-                Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
-                Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
-                Effect.Parameters["AoMapTexture"].SetValue(_material.AmbientOcclusionMapTexture);
-                Effect.Parameters["EmissiveMapTexture"].SetValue(_material.EmissiveMapTexture);
+                //Effect.Parameters["NormalMapTexture"].SetValue(_material.NormalMapTexture);
+                //Effect.Parameters["HeightMapTexture"].SetValue(_material.HeightMapTexture);
+                //Effect.Parameters["RoughnessMapTexture"].SetValue(_material.RoughnessMapTexture);
+                //Effect.Parameters["MetallicMapTexture"].SetValue(_material.MetallicMapTexture);
+                //Effect.Parameters["AoMapTexture"].SetValue(_material.AmbientOcclusionMapTexture);
+                //Effect.Parameters["EmissiveMapTexture"].SetValue(_material.EmissiveMapTexture);
                 Effect.Parameters["InvertNormalYAxis"].SetValue(_material.TexturedProperties.InvertNormalYAxis);
                 Effect.Parameters["IsDepthMap"].SetValue(_material.TexturedProperties.IsDepthMap);
                 Effect.Parameters["ParallaxMinSteps"].SetValue(_material.TexturedProperties.ParallaxMinSteps);

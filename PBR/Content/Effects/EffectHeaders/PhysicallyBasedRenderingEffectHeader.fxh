@@ -1,20 +1,8 @@
+#ifndef PHYSICALLY_BASED_RENDERING_EFFECT_HEADER_FXH
+#define PHYSICALLY_BASED_RENDERING_EFFECT_HEADER_FXH
+
 #include "CommonEffectHeader.fxh"
-
-// ----- PBR -----
-
-// ----- STRUCTURES -----
-
-struct MaterialProperties
-{
-    float3 DiffuseColor;
-    float Roughness;
-    float Metallic;
-    float Ao;
-    float3 EmissiveColor;
-    float BaseReflectivity;
-};
-
-// ----- FUNCTIONS -----
+#include "CommonStructuresEffectHeader.fxh"
 
 float D(float3 n, float3 h, float roughness)
 {
@@ -89,3 +77,5 @@ float3 PBR(float3 n,
 
     return saturate(color);
 }
+
+#endif // PHYSICALLY_BASED_RENDERING_EFFECT_HEADER_FXH

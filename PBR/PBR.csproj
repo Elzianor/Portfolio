@@ -25,6 +25,35 @@
         <PackageReference Include="MonoGame.Content.Builder.Task.Compute" Version="3.8.3.*" />
         <PackageReference Include="MonoGame.Framework.Compute.WindowsDX" Version="3.8.3.*" />
     </ItemGroup>
+    <ItemGroup>
+      <None Update="Content\Effects\EffectHeaders\ColorCorrectionEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\CommonEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\CommonPixelShadersEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\CommonStructuresEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\CommonUniformsEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\CommonVertexShadersEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\LightEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\ParallaxOcclusionMappingEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Effects\EffectHeaders\PhysicallyBasedRenderingEffectHeader.fxh">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
     <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
         <Message Text="Restoring dotnet tools" Importance="High" />
         <Exec Command="dotnet tool restore" />

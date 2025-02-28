@@ -1,4 +1,5 @@
-// ----- PARALLAX OCCLUSION MAPPING -----
+#ifndef PARALLAX_OCCLUSION_MAPPING_EFFECT_HEADER_FXH
+#define PARALLAX_OCCLUSION_MAPPING_EFFECT_HEADER_FXH
 
 float2 ParallaxOcclusionMapping(float2 texCoords,
 float3 viewDirTangentSpace,
@@ -57,3 +58,5 @@ int refinmentStepsCount)
 
     return currentUV;
 }
+
+#endif // PARALLAX_OCCLUSION_MAPPING_EFFECT_HEADER_FXH
