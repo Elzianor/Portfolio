@@ -8,6 +8,24 @@ RWStructuredBuffer<FabricParticle> FabricParticlesOutput;
 
 StructuredBuffer<FabricParticle> FabricParticlesReadOnly;
 
+texture FrontTexture;
+sampler2D FrontTextureSampler = sampler_state
+{
+    Texture = (FrontTexture);
+    Filter = Anisotropic;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+texture BackTexture;
+sampler2D BackTextureSampler = sampler_state
+{
+    Texture = (BackTexture);
+    Filter = Anisotropic;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
 //=============================================================================
 // Compute Shader
 //=============================================================================
@@ -41,8 +59,7 @@ float3 ProcessConstraint(FabricParticle currentParticle, FabricParticle neighbor
 
     float3 correction = float3(0.0, 0.0, 0.0);
 
-    //if (IsEqual(distance, restLength))
-    if (distance <= restLength)
+    if (distance > 0.05 && distance <= restLength)
         return correction;
 
     direction = normalize(direction);
@@ -328,7 +345,18 @@ float4 PSSolidCompute(VertexShaderOutputCompute input) : SV_TARGET
 
     MaterialProperties material;
 
-    material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates).xyz;
+    if (dot(normal, viewDirection) < 0)
+    {
+        normal = -normal;
+        float2 texCoord = float2(1.0 - input.TextureCoordinates.x, input.TextureCoordinates.y);
+        material.DiffuseColor = tex2D(BackTextureSampler, texCoord).xyz;
+    }
+    else
+    {
+        material.DiffuseColor = tex2D(FrontTextureSampler, input.TextureCoordinates).xyz;
+    }
+
+    //material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates).xyz;
     //material.DiffuseColor = DiffuseColor;
     material.Roughness = Roughness;
     material.Metallic = Metallic;

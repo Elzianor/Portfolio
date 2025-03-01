@@ -63,11 +63,11 @@ public class PBRDemo : Game
     private const float FabricStep = 0.1f;
 
     private const float FabricDamping = 0.002f;
-    private const float FabricStiffness = 0.8f;
+    private const float FabricStiffness = 0.3f;
 
     private const int IterativeRelaxationStepCount = 50;
 
-    private const bool UseShearingConstraints = false;
+    private const bool UseShearingConstraints = true;
 
     private const float FabricStructuralRestLength = FabricStep;
     private readonly float _fabricShearingRestLength = (float)Math.Sqrt(2 * FabricStep * FabricStep);
@@ -122,26 +122,25 @@ public class PBRDemo : Game
 
         _pbrEffectManager = new PbrEffectManager(Content, @"Effects\FabricComputeEffect")
         {
-            Material = new Material(materialFolder)
-            {
-                TexturedProperties = new TexturedProperties
-                {
-                    DiffuseTexturePath = @"Flags\Canada",
-                    //DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
-                    //NormalTexturePath = @$"Material\{materialFolder}\Normal",
-                    //HeightTexturePath = @$"Material\{materialFolder}\Height",
-                    //RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
-                    //MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
-                    //AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
-                    InvertNormalYAxis = true,
-                    IsDepthMap = false,
-                    ParallaxMinSteps = 10,
-                    ParallaxMaxSteps = 30,
-                    ParallaxHeightScale = 0.025f,
-                },
-                BaseReflectivity = 0.04f
-            },
-            /*Material = new Material("Solid")
+            //Material = new Material(materialFolder)
+            //{
+            //    TexturedProperties = new TexturedProperties
+            //    {
+            //        DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
+            //        NormalTexturePath = @$"Material\{materialFolder}\Normal",
+            //        HeightTexturePath = @$"Material\{materialFolder}\Height",
+            //        RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
+            //        MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
+            //        AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
+            //        InvertNormalYAxis = true,
+            //        IsDepthMap = false,
+            //        ParallaxMinSteps = 10,
+            //        ParallaxMaxSteps = 30,
+            //        ParallaxHeightScale = 0.025f,
+            //    },
+            //    BaseReflectivity = 0.04f
+            //},
+            Material = new Material("Solid")
             {
                 SolidColorProperties = new SolidColorProperties
                 {
@@ -150,7 +149,7 @@ public class PBRDemo : Game
                     Roughness = 0.8f
                 },
                 BaseReflectivity = 0.04f
-            },*/
+            },
             Gamma = 2.2f,
             ApplyGammaCorrection = true
         };
@@ -216,6 +215,9 @@ public class PBRDemo : Game
         _pbrEffectManager.Effect.Parameters["UseShearingConstraints"].SetValue(UseShearingConstraints);
 
         _pbrEffectManager.Effect.Parameters["FabricParticlesReadOnly"].SetValue(_fabricParticlesOutputBuffer);
+
+        _pbrEffectManager.Effect.Parameters["FrontTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));
+        _pbrEffectManager.Effect.Parameters["BackTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));
 
         base.Initialize();
     }
@@ -376,18 +378,18 @@ public class PBRDemo : Game
             {
                 var newParticle = new FabricParticle
                 {
-                    //Position = new Vector3(w * FabricStep, h * FabricStep, -h * FabricStep * 0.01f),
-                    Position = new Vector3(w * FabricStep, y, -h * FabricStep),
+                    Position = new Vector3(w * FabricStep, h * FabricStep, -h * FabricStep * 0.01f),
+                    //Position = new Vector3(w * FabricStep, y, -h * FabricStep),
                     TotalForce = Vector3.Zero,
                     Velocity = Vector3.Zero,
                     Acceleration = _gravitationalAcceleration,
                     Normal = Vector3.UnitY,
-                    TextureCoord = new Vector2(FabricWidth - (float)w / FabricWidth, FabricHeight - (float)h / FabricHeight),
-                    IsPinned = w == 0 && h == FabricHeight - 1 ||
-                               w == FabricWidth / 2 && h == FabricHeight - 1 ||
-                             w == FabricWidth - 1 && h == FabricHeight - 1
+                    TextureCoord = new Vector2((float)w / FabricWidth, FabricHeight - (float)h / FabricHeight),
+                    //IsPinned = w == 0 && h == FabricHeight - 1 ||
+                    //           w == FabricWidth / 2 && h == FabricHeight - 1 ||
+                    //         w == FabricWidth - 1 && h == FabricHeight - 1
 
-                    //IsPinned = w == 0 && h is 0 or FabricHeight / 2 or FabricHeight - 1
+                    IsPinned = w == 0 && h is 0 or FabricHeight / 2 or FabricHeight - 1
                 };
 
                 newParticle.PrevPosition = newParticle.Position;
