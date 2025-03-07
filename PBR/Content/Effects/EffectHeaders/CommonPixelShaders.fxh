@@ -175,4 +175,81 @@ float4 PS_PBR_Textured(VSOutputPBRTextured input) : SV_TARGET
     return float4(color, 1.0);
 }
 
+float4 PS_PBR_FabricCompute(VSOutputCompute input) : SV_TARGET
+{
+    float3 viewDirection = normalize(-input.WorldViewPosition);
+    float3 lightDirection;
+
+    float spotIntensity = 1.0;
+
+    if (LightType == 0) // directional
+    {
+        lightDirection = normalize(-WorldViewLightDirection);
+    }
+    else if (LightType == 1) // point
+    {
+        lightDirection = normalize(WorldViewLightPosition - input.WorldViewPosition);
+    }
+    else if (LightType == 2) // spot
+    {
+        lightDirection = normalize(WorldViewLightPosition - input.WorldViewPosition);
+
+        float theta = dot(lightDirection, normalize(-WorldViewLightDirection));
+        float epsilon = CutOffInner - CutOffOuter;
+        spotIntensity = smoothstep(0.0, 1.0, (theta - CutOffOuter) / epsilon);
+    }
+
+    float3 halfDirection = normalize(viewDirection + lightDirection);
+    float3 normal = normalize(input.Normal);
+
+    if (IsDoubleSidedMaterial)
+        normal = GetDoubleSidedMaterialNormal(normal, viewDirection);
+
+    PBRMaterialProperties material;
+
+    material.DiffuseColor = tex2D(DiffuseMapTextureSampler, input.TextureCoordinates);
+    material.Roughness = Roughness;
+    material.Metallic = Metallic;
+    material.Ao = 1.0;
+    material.EmissiveColor = EmissiveColor;
+    material.BaseReflectivity = BaseReflectivity;
+
+    if (ApplyGammaCorrection)
+    {
+        material.DiffuseColor = InverseGammaCorrection(material.DiffuseColor, Gamma);
+        material.EmissiveColor = InverseGammaCorrection(material.EmissiveColor, Gamma);
+        LightColor = InverseGammaCorrection(LightColor, Gamma);
+        AmbientColor = InverseGammaCorrection(AmbientColor, Gamma);
+    }
+
+    float attenuation = 1.0;
+
+    if (LightType == 1 || LightType == 2)
+    {
+        float distanceToLightSource = length(WorldViewLightPosition - input.WorldViewPosition);
+        attenuation = GetAttenuation(distanceToLightSource, Constant, Linear, Quadratic);
+    }
+
+    float3 color = PBR(normal,
+        lightDirection,
+        viewDirection,
+        halfDirection,
+        material,
+        LightColor,
+        AmbientColor,
+        attenuation,
+        spotIntensity);
+
+    color = SimpleToneMapping(color);
+
+    if (ApplyGammaCorrection)
+    {
+        color = GammaCorrection(color, Gamma);
+    }
+
+    color = saturate(color);
+
+    return float4(color, 1.0);
+}
+
 #endif // COMMON_PIXEL_SHADERS_FXH

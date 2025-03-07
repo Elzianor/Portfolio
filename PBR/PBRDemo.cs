@@ -1,5 +1,6 @@
 ﻿using Beryllium.Camera;
 using Beryllium.FrameRateCounter;
+using Beryllium.Materials;
 using Beryllium.MonoInput.KeyboardInput;
 using Beryllium.MonoInput.MouseInput;
 using Beryllium.Primitives3D;
@@ -10,69 +11,13 @@ using PBR.EffectManagers;
 using PBR.Managers;
 using PBR.Utils;
 using System;
-using System.Collections.Generic;
-using Beryllium.Materials;
-using VertexBuffer = Microsoft.Xna.Framework.Graphics.VertexBuffer;
+using PBR.Managers.EffectManagers;
+using PBR.Primitives3D;
 
 namespace PBR;
 
-struct FabricParticle
-{
-    public Vector3 PrevPosition;
-    public Vector3 Position;
-    public Vector3 TotalForce;
-    public Vector3 Velocity;
-    public Vector3 Acceleration;
-    public Vector3 Normal;
-    public Vector2 TextureCoord;
-    public bool IsPinned;
-};
-
 public class PBRDemo : Game
 {
-    #region Fabric compute shader properties
-    // has to be the same as the GroupSize define in the compute shader
-    private const int ComputeGroupSize = 256;
-
-    private int _fabricParticlesGroupCount;
-
-    // stores all the particle information, will be updated by the compute shader
-    private StructuredBuffer _fabricParticlesInputBuffer;
-    private StructuredBuffer _fabricParticlesOutputBuffer;
-
-    // used for drawing the particles
-    private VertexBuffer _vertexBuffer;
-    private IndexBuffer _indexBuffer;
-    private short[] _indices;
-
-    private float _windSpeed;
-
-    private float _currentElapsedTimeSeconds;
-    private const float PhysicsUpdateTimeStep = 0.01f;
-
-    private const float FabricParticleMass = 0.15f;
-    private readonly Vector3 _gravitationalAcceleration = new (0, -9.8f, 0);
-
-    private const float AirDensity = 1.225f; // kg/m^3
-    private const float FabricParticleDragCoefficient = 1.5f;
-    private const float FabricParticleProjectedArea = FabricStep * FabricStep;
-    private Vector3 _wind = new (0, 0, 0);
-
-    private const int FabricWidth = 50;
-    private const int FabricHeight = 50;
-    private const float FabricStep = 0.1f;
-
-    private const float FabricDamping = 0.002f;
-    private const float FabricStiffness = 0.3f;
-
-    private const int IterativeRelaxationStepCount = 50;
-
-    private const bool UseShearingConstraints = true;
-
-    private const float FabricStructuralRestLength = FabricStep;
-    private readonly float _fabricShearingRestLength = (float)Math.Sqrt(2 * FabricStep * FabricStep);
-    #endregion
-
     //private readonly Color _background = new(50, 50, 50);
     private readonly Color _background = new(15, 15, 15);
 
@@ -122,7 +67,6 @@ public class PBRDemo : Game
 
         var materialFolder = "WoodFloor";
 
-        //_pbrEffectManager = new PbrEffectManager(Content, @"Effects\FabricComputeEffect")
         _pbrEffectManager = new PbrEffectManager(Content, @"Effects\PBR")
         {
             Material = new Material(materialFolder)
@@ -157,13 +101,7 @@ public class PBRDemo : Game
             ApplyGammaCorrection = true
         };
 
-        _lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSource")
-        {
-            LightColor = _pbrEffectManager.LightColor
-        };
-
-        _texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
-        _texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
+        _lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSource");
 
         _lightManager = new LightManager(_pbrEffectManager,
             _lightSourceEffectManager,
@@ -184,43 +122,10 @@ public class PBRDemo : Game
             LightType = LightType.Spot
         };
 
+        _texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
+        _texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
+
         //_coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
-
-        // COMPUTE SHADER PART
-        /*_pbrEffectManager.ApplyTechnique("FabricComputeTechnique");
-
-        var particles = SetupFabricParticles();
-        _fabricParticlesGroupCount = (int)Math.Ceiling((double)particles.Count / ComputeGroupSize);
-        SetupBuffers(particles);
-
-        _pbrEffectManager.Effect.Parameters["FabricParticlesInput"].SetValue(_fabricParticlesInputBuffer);
-        _pbrEffectManager.Effect.Parameters["FabricParticlesOutput"].SetValue(_fabricParticlesOutputBuffer);
-
-        _pbrEffectManager.Effect.Parameters["FabricParticlesCount"].SetValue((uint)particles.Count);
-
-        _pbrEffectManager.Effect.Parameters["FabricParticleMass"].SetValue(FabricParticleMass);
-        _pbrEffectManager.Effect.Parameters["GravitationalAcceleration"].SetValue(_gravitationalAcceleration);
-        _pbrEffectManager.Effect.Parameters["PhysicsUpdateTimeStep"].SetValue(PhysicsUpdateTimeStep);
-
-        _pbrEffectManager.Effect.Parameters["AirDensity"].SetValue(AirDensity);
-        _pbrEffectManager.Effect.Parameters["FabricParticleDragCoefficient"].SetValue(FabricParticleDragCoefficient);
-        _pbrEffectManager.Effect.Parameters["FabricParticleProjectedArea"].SetValue(FabricParticleProjectedArea);
-        _pbrEffectManager.Effect.Parameters["Wind"].SetValue(_wind);
-
-        _pbrEffectManager.Effect.Parameters["FabricWidthInParticles"].SetValue((uint)FabricWidth);
-        _pbrEffectManager.Effect.Parameters["FabricHeightInParticles"].SetValue((uint)FabricHeight);
-        _pbrEffectManager.Effect.Parameters["FabricStructuralRestLength"].SetValue(FabricStructuralRestLength);
-        _pbrEffectManager.Effect.Parameters["FabricShearingRestLength"].SetValue(_fabricShearingRestLength);
-
-        _pbrEffectManager.Effect.Parameters["FabricDamping"].SetValue(FabricDamping);
-        _pbrEffectManager.Effect.Parameters["FabricStiffness"].SetValue(FabricStiffness);
-
-        _pbrEffectManager.Effect.Parameters["UseShearingConstraints"].SetValue(UseShearingConstraints);
-
-        _pbrEffectManager.Effect.Parameters["FabricParticlesReadOnly"].SetValue(_fabricParticlesOutputBuffer);
-
-        _pbrEffectManager.Effect.Parameters["FrontTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));
-        _pbrEffectManager.Effect.Parameters["BackTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));*/
 
         // --- force field ---
 
@@ -294,9 +199,6 @@ public class PBRDemo : Game
         _texturedXZPlane.Draw(_pbrEffectManager.Effect);
         _lightManager.Draw();
 
-        //ComputeFabricParticles(gameTime);
-        //DrawParticles();
-        //_lightManager.Draw();
         //_coordinateAxes.Draw();
 
         //var wvp = _camera.OffsetWorldMatrix * _camera.ViewMatrix * _camera.ProjectionMatrix;
@@ -318,7 +220,6 @@ public class PBRDemo : Game
         DrawNextString($"FPS: {FrameRateCounter.FrameRate:n2}");
         DrawNextString($"FOV: {_camera.FovDegrees} degrees");
         DrawNextString($"Light type: {_lightManager.LightType}");
-        DrawNextString($"Wind: {_wind}");
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -412,140 +313,4 @@ public class PBRDemo : Game
             Color.Green);
         _nextStringPosition += 20;
     }
-
-    #region Fabric compute shader related methods
-    private List<FabricParticle> SetupFabricParticles()
-    {
-        var particles = new List<FabricParticle>();
-        var indices = new List<short>();
-
-        var y = FabricHeight * FabricStep / 2.0f;
-
-        var currentIndex = 0;
-
-        for (var h = 0; h < FabricHeight; h++)
-        {
-            for (var w = 0; w < FabricWidth; w++)
-            {
-                var newParticle = new FabricParticle
-                {
-                    Position = new Vector3(w * FabricStep, h * FabricStep, -h * FabricStep * 0.01f),
-                    //Position = new Vector3(w * FabricStep, y, -h * FabricStep),
-                    TotalForce = Vector3.Zero,
-                    Velocity = Vector3.Zero,
-                    Acceleration = _gravitationalAcceleration,
-                    Normal = Vector3.UnitY,
-                    TextureCoord = new Vector2((float)w / FabricWidth, FabricHeight - (float)h / FabricHeight),
-                    //IsPinned = w == 0 && h == FabricHeight - 1 ||
-                    //           w == FabricWidth / 2 && h == FabricHeight - 1 ||
-                    //         w == FabricWidth - 1 && h == FabricHeight - 1
-
-                    IsPinned = w == 0 && h is 0 or FabricHeight / 2 or FabricHeight - 1
-                };
-
-                newParticle.PrevPosition = newParticle.Position;
-
-                if (w < FabricWidth - 1 && h < FabricHeight - 1)
-                {
-                    var upIndex = currentIndex + FabricWidth;
-                    var rightIndex = currentIndex + 1;
-                    var upRightIndex = upIndex + 1;
-
-                    indices.Add((short)currentIndex);
-                    indices.Add((short)upIndex);
-                    indices.Add((short)rightIndex);
-
-                    indices.Add((short)rightIndex);
-                    indices.Add((short)upIndex);
-                    indices.Add((short)upRightIndex);
-                }
-
-                currentIndex++;
-
-                particles.Add(newParticle);
-            }
-        }
-
-        _indices = indices.ToArray();
-
-        return particles;
-    }
-
-    private void SetupBuffers(List<FabricParticle> particles)
-    {
-        _fabricParticlesInputBuffer = new StructuredBuffer(GraphicsDevice,
-            typeof(FabricParticle),
-            particles.Count,
-            BufferUsage.None,
-            ShaderAccess.ReadWrite);
-
-        _fabricParticlesOutputBuffer = new StructuredBuffer(GraphicsDevice,
-            typeof(FabricParticle),
-            particles.Count,
-            BufferUsage.None,
-            ShaderAccess.ReadWrite);
-
-        // no need to initialize, all the data for drawing the particles is coming from the structured buffer
-        _vertexBuffer = new VertexBuffer(GraphicsDevice,
-            typeof(VertexPositionNormalTexture),
-            particles.Count,
-            BufferUsage.WriteOnly);
-
-        _indexBuffer = new IndexBuffer(GraphicsDevice,
-            typeof(short),
-            _indices.Length,
-            BufferUsage.WriteOnly);
-
-        _indexBuffer.SetData(_indices);
-        _fabricParticlesInputBuffer.SetData(particles.ToArray());
-    }
-
-    private void ComputeFabricParticles(GameTime gameTime)
-    {
-        _currentElapsedTimeSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_currentElapsedTimeSeconds < PhysicsUpdateTimeStep) return;
-
-        // Verlet pass
-        _pbrEffectManager.Effect.CurrentTechnique.Passes["VerletPass"].ApplyCompute();
-        GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
-
-        // Constraints Pass
-        for (var i = 0; i < IterativeRelaxationStepCount; i++)
-        {
-            _pbrEffectManager.Effect.CurrentTechnique.Passes["ConstraintsPass"].ApplyCompute();
-            GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
-
-            _pbrEffectManager.Effect.CurrentTechnique.Passes["UpdateInputBufferPass"].ApplyCompute();
-            GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
-        }
-
-        // Air calculations
-        _pbrEffectManager.Effect.CurrentTechnique.Passes["AirCalculations"].ApplyCompute();
-        GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
-
-        _pbrEffectManager.Effect.CurrentTechnique.Passes["UpdateInputBufferPass"].ApplyCompute();
-        GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
-
-        _wind = new Vector3(_windSpeed, _windSpeed * 0.2f, _windSpeed * 0.2f);
-
-        _pbrEffectManager.Effect.Parameters["Wind"].SetValue(_wind);
-
-        _currentElapsedTimeSeconds -= PhysicsUpdateTimeStep;
-    }
-
-    private void DrawParticles()
-    {
-        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-
-        _pbrEffectManager.ApplyPass("RenderPass");
-
-        GraphicsDevice.Indices = _indexBuffer;
-        GraphicsDevice.SetVertexBuffer(_vertexBuffer);
-        GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList,
-            0,
-            0,
-            _indices.Length / 3);
-    }
-    #endregion
 }

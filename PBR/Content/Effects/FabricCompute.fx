@@ -14,7 +14,7 @@ technique FabricComputeTechnique
         ComputeShader = compile cs_5_0 CS_Constraints();
     }
 
-    pass AirCalculations
+    pass AirCalculationsPass
     {
         ComputeShader = compile cs_5_0 CS_AirCalculations();
     }
@@ -27,6 +27,6 @@ technique FabricComputeTechnique
     pass RenderPass
     {
         VertexShader = compile vs_5_0 VS_FabricCompute();
-        PixelShader = compile ps_5_0 PS_PBR_Textured();
+        PixelShader = compile ps_5_0 PS_PBR_FabricCompute();
     }
 }

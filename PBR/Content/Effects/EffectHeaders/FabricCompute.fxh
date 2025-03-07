@@ -2,6 +2,7 @@
 #define FABRIC_COMPUTE_FXH
 
 #include "Common.fxh"
+#include "CommonStructures.fxh"
 
 #define GroupSize 256
 
@@ -48,7 +49,7 @@ float3 ProcessConstraint(FabricParticle currentParticle, FabricParticle neighbor
 
     float3 correction = float3(0.0, 0.0, 0.0);
 
-    if (distance > 0.05 && distance <= restLength)
+    if (distance >= restLength * 0.1 && distance <= restLength)
         return correction;
 
     direction = normalize(direction);
