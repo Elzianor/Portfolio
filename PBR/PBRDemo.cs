@@ -73,8 +73,8 @@ public class PBRDemo : Game
     private readonly float _fabricShearingRestLength = (float)Math.Sqrt(2 * FabricStep * FabricStep);
     #endregion
 
-    private readonly Color _background = new(50, 50, 50);
-    //private readonly Color _background = new(15, 15, 15);
+    //private readonly Color _background = new(50, 50, 50);
+    private readonly Color _background = new(15, 15, 15);
 
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
@@ -88,6 +88,8 @@ public class PBRDemo : Game
     private LightSourceEffectManager _lightSourceEffectManager;
     private TexturedXZPlane _texturedXZPlane;
     private LightManager _lightManager;
+
+    private DrawableSphere _forceFieldSphere;
 
     private CoordinateAxes _coordinateAxes;
 
@@ -120,47 +122,48 @@ public class PBRDemo : Game
 
         var materialFolder = "WoodFloor";
 
-        _pbrEffectManager = new PbrEffectManager(Content, @"Effects\FabricComputeEffect")
+        //_pbrEffectManager = new PbrEffectManager(Content, @"Effects\FabricComputeEffect")
+        _pbrEffectManager = new PbrEffectManager(Content, @"Effects\PBR")
         {
-            //Material = new Material(materialFolder)
-            //{
-            //    TexturedProperties = new TexturedProperties
-            //    {
-            //        DiffuseTexturePath = @$"Material\{materialFolder}\Diffuse",
-            //        NormalTexturePath = @$"Material\{materialFolder}\Normal",
-            //        HeightTexturePath = @$"Material\{materialFolder}\Height",
-            //        RoughnessTexturePath = @$"Material\{materialFolder}\Roughness",
-            //        MetallicTexturePath = @$"Material\{materialFolder}\Metallic",
-            //        AmbientOcclusionTexturePath = @$"Material\{materialFolder}\AO",
-            //        InvertNormalYAxis = true,
-            //        IsDepthMap = false,
-            //        ParallaxMinSteps = 10,
-            //        ParallaxMaxSteps = 30,
-            //        ParallaxHeightScale = 0.025f,
-            //    },
-            //    BaseReflectivity = 0.04f
-            //},
-            Material = new Material("Solid")
+            Material = new Material(materialFolder)
             {
-                SolidColorProperties = new SolidColorProperties
+                TexturedProperties = new TexturedProperties
                 {
-                    DiffuseColor = Color.Coral.ToVector3(),
-                    Metallic = 0.1f,
-                    Roughness = 0.8f
+                    DiffuseTexturePath = @$"Materials\PBR\{materialFolder}\Diffuse",
+                    NormalTexturePath = @$"Materials\PBR\{materialFolder}\Normal",
+                    HeightTexturePath = @$"Materials\PBR\{materialFolder}\Height",
+                    RoughnessTexturePath = @$"Materials\PBR\{materialFolder}\Roughness",
+                    MetallicTexturePath = @$"Materials\PBR\{materialFolder}\Metallic",
+                    AmbientOcclusionTexturePath = @$"Materials\PBR\{materialFolder}\AO",
+                    InvertNormalYAxis = true,
+                    IsDepthMap = false,
+                    ParallaxMinSteps = 0,
+                    ParallaxMaxSteps = 0,
+                    ParallaxHeightScale = 0.0f,
                 },
                 BaseReflectivity = 0.04f
             },
+            //Material = new Material("Solid")
+            //{
+            //    SolidColorProperties = new SolidColorProperties
+            //    {
+            //        DiffuseColor = Color.Coral.ToVector3(),
+            //        Metallic = 0.1f,
+            //        Roughness = 0.8f
+            //    },
+            //    BaseReflectivity = 0.04f
+            //},
             Gamma = 2.2f,
             ApplyGammaCorrection = true
         };
 
-        _lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSourceEffect")
+        _lightSourceEffectManager = new LightSourceEffectManager(Content, @"Effects\LightSource")
         {
             LightColor = _pbrEffectManager.LightColor
         };
 
-        //_texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
-        //_texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
+        _texturedXZPlane = new TexturedXZPlane(GraphicsDevice, new Point(10, 10), 4.0f);
+        _texturedXZPlane.Position = new Vector3(-_texturedXZPlane.SizeX / 2.0f, 0, _texturedXZPlane.SizeZ / 2.0f);
 
         _lightManager = new LightManager(_pbrEffectManager,
             _lightSourceEffectManager,
@@ -172,7 +175,7 @@ public class PBRDemo : Game
             LightPosition = new Vector3(-3.5f, 1, -1.5f),
             LightColor = Color.White.ToVector3(),
             LightIntensity = 1.0f,
-            //AmbientColor = Color.White.ToVector3() * 0.15f,
+            AmbientColor = Color.White.ToVector3() * 0.15f,
             Constant = 1.0f,
             Linear = 0.09f,
             Quadratic = 0.032f,
@@ -184,7 +187,7 @@ public class PBRDemo : Game
         //_coordinateAxes = new CoordinateAxes(GraphicsDevice, 2.0f);
 
         // COMPUTE SHADER PART
-        _pbrEffectManager.ApplyTechnique("FabricComputeTechnique");
+        /*_pbrEffectManager.ApplyTechnique("FabricComputeTechnique");
 
         var particles = SetupFabricParticles();
         _fabricParticlesGroupCount = (int)Math.Ceiling((double)particles.Count / ComputeGroupSize);
@@ -217,10 +220,31 @@ public class PBRDemo : Game
         _pbrEffectManager.Effect.Parameters["FabricParticlesReadOnly"].SetValue(_fabricParticlesOutputBuffer);
 
         _pbrEffectManager.Effect.Parameters["FrontTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));
-        _pbrEffectManager.Effect.Parameters["BackTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));
+        _pbrEffectManager.Effect.Parameters["BackTexture"].SetValue(Content.Load<Texture2D>(@"Flags\Canada"));*/
+
+        // --- force field ---
+
+        //_forceFieldSphere = new DrawableSphere(GraphicsDevice,
+        //    5, 64, 64, 0.15f);
+        //_ffEffect = Content.Load<Effect>(@"Effects\ForceFieldEffect");
+
+        //_ffEffect.Parameters["GridTexture"].SetValue(Content.Load<Texture2D>(@"Noise\Grid"));
+        //_ffEffect.Parameters["NoiseTexture"].SetValue(Content.Load<Texture2D>(@"Noise\Noise"));
+        //_ffEffect.Parameters["FieldColor"].SetValue(new Vector3(0.745f, 0.823f, 0.96f));
+        //_ffEffect.Parameters["GridLinesColor"].SetValue(new Vector3(0.15f, 0.0f, 0.0f));
+        //_ffEffect.Parameters["GlowIntensity"].SetValue(1.0f);
+
+        //_ffEffect.Parameters["WaveCenter"].SetValue(new Vector2(1.5f, 2.0f));
+
+        //_rand = new Random();
 
         base.Initialize();
     }
+
+    private Effect _ffEffect;
+    private float _ffTime;
+    private float _ffShockwaveTime;
+    private Random _rand;
 
     protected override void LoadContent()
     {
@@ -243,6 +267,13 @@ public class PBRDemo : Game
 
         HandleInput();
 
+        //_ffTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        //_ffEffect.Parameters["Time"].SetValue(_ffTime);
+
+        //_ffEffect.Parameters["ShockwaveTime"].SetValue(_ffShockwaveTime);
+        //_ffShockwaveTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _pbrEffectManager.Update(_camera);
         _lightManager.Update(_camera);
 
         //_coordinateAxes.Update(_camera.OffsetWorldMatrix,
@@ -257,16 +288,30 @@ public class PBRDemo : Game
         GraphicsDevice.Clear(_background);
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
-        /*_pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
+        _pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
         _texturedXZPlane.Draw(_pbrEffectManager.Effect);
-
-        _lightManager.Draw();*/
-
-        ComputeFabricParticles(gameTime);
-        DrawParticles();
         _lightManager.Draw();
+
+        //ComputeFabricParticles(gameTime);
+        //DrawParticles();
+        //_lightManager.Draw();
         //_coordinateAxes.Draw();
+
+        //var wvp = _camera.OffsetWorldMatrix * _camera.ViewMatrix * _camera.ProjectionMatrix;
+        //var wv = _camera.OffsetWorldMatrix * _camera.ViewMatrix;
+        //var wvit = Matrix.Transpose(Matrix.Invert(wv));
+
+        //_ffEffect.Parameters["WorldViewProjection"].SetValue(wvp);
+        //_ffEffect.Parameters["WorldView"].SetValue(wv);
+        //_ffEffect.Parameters["WorldViewInverseTranspose"].SetValue(wvit);
+
+        //GraphicsDevice.RasterizerState = _camera.Offset.LengthSquared() > 25 ?
+        //    RasterizerState.CullCounterClockwise :
+        //    RasterizerState.CullClockwise;
+
+        //_forceFieldSphere.Draw(_ffEffect);
 
         _spriteBatch.Begin();
         _nextStringPosition = 10;
@@ -301,15 +346,21 @@ public class PBRDemo : Game
 
     private void HandleInput()
     {
+        if (KeyboardManager.IsKeyPressed(Keys.K))
+        {
+            var nextU = (float)_rand.NextDouble() - 0.5f;
+            var nextV = (float)_rand.NextDouble() - 0.5f;
+            _ffEffect.Parameters["WaveCenter"].SetValue(new Vector2(1.5f + nextU, 2.0f + nextV));
+
+            var nextY = 0.3f + (float)_rand.NextDouble() * 2.7f;
+            _ffEffect.Parameters["WaveParams"].SetValue(new Vector3(10.0f, nextY, 0.1f));
+
+            _ffShockwaveTime = 0;
+        }
+
         if (KeyboardManager.IsKeyPressed(Keys.D1)) _lightManager.LightType = LightType.Directional;
         if (KeyboardManager.IsKeyPressed(Keys.D2)) _lightManager.LightType = LightType.Point;
         if (KeyboardManager.IsKeyPressed(Keys.D3)) _lightManager.LightType = LightType.Spot;
-
-        if (KeyboardManager.IsKeyDown(Keys.Left)) _windSpeed -= 0.05f;
-        if (KeyboardManager.IsKeyDown(Keys.Right)) _windSpeed += 0.05f;
-
-        if (KeyboardManager.IsKeyDown(Keys.Up)) _pbrEffectManager.Effect.Parameters["PinnedYShift"].SetValue(0.01f);
-        if (KeyboardManager.IsKeyDown(Keys.Down)) _pbrEffectManager.Effect.Parameters["PinnedYShift"].SetValue(-0.01f);
 
         if (KeyboardManager.IsKeyUp(Keys.Up) || KeyboardManager.IsKeyUp(Keys.Down))
         {
@@ -465,7 +516,7 @@ public class PBRDemo : Game
             _pbrEffectManager.Effect.CurrentTechnique.Passes["ConstraintsPass"].ApplyCompute();
             GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
 
-            _pbrEffectManager.Effect.CurrentTechnique.Passes["SwapBuffersPass"].ApplyCompute();
+            _pbrEffectManager.Effect.CurrentTechnique.Passes["UpdateInputBufferPass"].ApplyCompute();
             GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
         }
 
@@ -473,7 +524,7 @@ public class PBRDemo : Game
         _pbrEffectManager.Effect.CurrentTechnique.Passes["AirCalculations"].ApplyCompute();
         GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
 
-        _pbrEffectManager.Effect.CurrentTechnique.Passes["SwapBuffersPass"].ApplyCompute();
+        _pbrEffectManager.Effect.CurrentTechnique.Passes["UpdateInputBufferPass"].ApplyCompute();
         GraphicsDevice.DispatchCompute(_fabricParticlesGroupCount, 1, 1);
 
         _wind = new Vector3(_windSpeed, _windSpeed * 0.2f, _windSpeed * 0.2f);
