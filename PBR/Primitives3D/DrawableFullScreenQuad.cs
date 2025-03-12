@@ -5,6 +5,8 @@ namespace Beryllium.Primitives3D;
 
 internal class DrawableFullScreenQuad
 {
+    private GraphicsDevice _graphicsDevice;
+
     private VertexPositionTexture[] _vertices = {
         new(new Vector3(-1, 1, 0), new Vector2(0, 0)),   // Top-left
         new(new Vector3(1, 1, 0), new Vector2(1, 0)),    // Top-right
@@ -18,6 +20,8 @@ internal class DrawableFullScreenQuad
 
     public DrawableFullScreenQuad(GraphicsDevice graphicsDevice)
     {
+        _graphicsDevice = graphicsDevice;
+
         VertexBuffer = new VertexBuffer(graphicsDevice,
             typeof(VertexPositionTexture),
             _vertices.Length,
@@ -29,5 +33,13 @@ internal class DrawableFullScreenQuad
             _indices.Length,
             BufferUsage.WriteOnly);
         IndexBuffer.SetData(_indices);
+    }
+
+    public void Draw()
+    {
+        _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList,
+            0,
+            0,
+            2);
     }
 }

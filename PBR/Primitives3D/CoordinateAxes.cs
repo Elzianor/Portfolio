@@ -23,11 +23,11 @@ internal class CoordinateAxes(GraphicsDevice graphicsDevice, float axisLength)
         new (Vector3.UnitZ * axisLength, Color.Blue)
     ];
 
-    public void Update(Matrix world, Matrix view, Matrix projection)
+    public void Update(Camera.Camera camera)
     {
-        _basicEffect.World = world;
-        _basicEffect.View = view;
-        _basicEffect.Projection = projection;
+        _basicEffect.World = camera.OffsetWorldMatrix;
+        _basicEffect.View = camera.ViewMatrix;
+        _basicEffect.Projection = camera.ProjectionMatrix;
     }
 
     public virtual void Draw()

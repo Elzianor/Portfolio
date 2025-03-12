@@ -1,139 +1,211 @@
-#include "EffectHeaders/ColorCorrection.fxh"
+#include "EffectHeaders/Common.fxh"
 
-// Transform
+// --- UNIFORMS ---
+//samplerCUBE CubeSampler;
+
+float4x4 World;
 float4x4 WorldViewProjection;
 float4x4 WorldView;
 float4x4 WorldViewInverseTranspose;
 
-texture GridTexture;
-sampler2D GridTextureSampler = sampler_state
-{
-    Texture = (GridTexture);
-    Filter = Anisotropic;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
-texture NoiseTexture;
-sampler2D NoiseTextureSampler = sampler_state
-{
-    Texture = (NoiseTexture);
-    Filter = Anisotropic;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
 float Time;
-float ShockwaveTime;
-float3 FieldColor;
-float3 GridLinesColor;
-float GlowIntensity;
-float2 WaveCenter;
-float3 WaveParams;
 
-struct VS_INPUT
+float3 MainColor;
+float3 HighlightColor;
+float3 LowCapacityColor;
+float HighlightThickness;
+float GlowIntensity;
+
+float DissolveThreshold;
+float Height;
+
+bool IsLowCapacity;
+
+// --- FUNCTIONS ---
+
+float GetNoiseValue(float3 position)
 {
-    float4 Position : POSITION0;
-    float3 Normal : NORMAL0;
-    float3 Tangent : TANGENT0;
-    float2 TextureCoordinates : TEXCOORD0;
+    float noiseStep = 64.0;
+
+    float shiftX = Time * 0.1;
+    float shiftY = Time * 0.1;
+    float shiftZ = Time * 0.1;
+
+    return GetMultioctave3DNoiseValue((position.x + shiftX) * noiseStep,
+    (position.y + shiftY) * noiseStep,
+    (position.z + shiftZ) * noiseStep,
+    1.0,
+    5.0,
+    2.0,
+    true);
+}
+
+bool IsBelowGroundLevel(float positionY)
+{
+    return positionY < 0.0;
+}
+
+bool IsOff()
+{
+    return DissolveThreshold == 0.0 || Height == 0.0;
+}
+
+float3 HandleInteriorVisibility(float3 normal, float3 viewDirection)
+{
+    if (dot(normal, viewDirection) < 0.0)
+        return -normal;
+    else
+        return normal;
+}
+
+float CalculateFieldStrength(float3 normal, float3 viewDirection, float noise)
+{
+    float fresnel = pow(1.0 - dot(normal, viewDirection), 5.0);
+    float fieldStrength = fresnel * (0.5 + noise * 0.75);
+
+    return fieldStrength;
+}
+
+float3 CalculateBaseColor(float fieldStrength)
+{
+    float3 color = MainColor;
+    color *= fieldStrength * GlowIntensity;
+
+    return color;
+}
+
+float4 CalculateFinalColor(float3 position,
+                           float heightThreshold,
+                           float highlightStep,
+                           float fieldStrength,
+                           float3 dissolveHighlightColor,
+                           float noise,
+                           float originalNoise)
+{
+    float3 color;
+    float alpha;
+
+    // draw highlights
+    if (position.y <= HighlightThickness * 2.0 ||
+        position.y > heightThreshold - HighlightThickness ||
+        highlightStep > 0.0)
+    {
+        color = HighlightColor;
+
+        if (IsLowCapacity)
+        {
+            color = lerp(color, LowCapacityColor, abs(sin(Time * 0.75)));
+        }
+
+        alpha = 0.5;
+    }
+    // draw main color
+    else
+    {
+        color = CalculateBaseColor(fieldStrength);
+        color += dissolveHighlightColor;
+        alpha = fieldStrength + 0.15;
+
+        if (noise > 0.0)
+        {
+            color += MainColor * 0.2;
+            alpha += 0.1;
+        }
+
+        if (IsLowCapacity)
+        {
+            color = lerp(color, LowCapacityColor, abs(sin(Time * 0.75)) * 0.2);
+            alpha += abs(sin(Time * 0.75)) * 0.2;
+        }
+    }
+
+    return saturate(float4(color, alpha));
+}
+
+// --- STRUCTURES ---
+
+struct VertexShaderInput
+{
+    float4 Position : POSITION;
+    float3 Normal : NORMAL;
 };
 
-struct VS_OUTPUT
+struct VertexShaderOutput
 {
     float4 Position : SV_POSITION;
     float3 Normal : TEXCOORD0;
-    float3 WorldViewPos : TEXCOORD2;
-    float2 TextureCoordinates : TEXCOORD3;
+    float3 WorldViewPosition : TEXCOORD1;
+    float3 TextureCoordinates : TEXCOORD2;
+    float3 WorldPosition : TEXCOORD3;
 };
 
-VS_OUTPUT VS_Main(VS_INPUT input)
+// --- SHADERS ---
+
+VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
-    VS_OUTPUT output;
+    VertexShaderOutput output;
 
     output.Position = mul(input.Position, WorldViewProjection);
-    output.WorldViewPos = mul(input.Position, WorldView).xyz;
-    output.Normal = normalize(mul(input.Normal, (float3x3) WorldViewInverseTranspose));
-    output.TextureCoordinates = input.TextureCoordinates;
+    output.Normal = normalize(mul(input.Normal, (float3x3)WorldViewInverseTranspose));
+    output.WorldViewPosition = mul(input.Position, WorldView).xyz;
+    output.TextureCoordinates = normalize(input.Normal);
+    output.WorldPosition = mul(input.Position, World).xyz;
 
     return output;
 }
 
-float4 PS_Main(VS_OUTPUT input) : SV_Target
+float4 PixelShaderFunction(VertexShaderOutput input) : SV_Target
 {
-    float currentTime = ShockwaveTime;
-    float2 inputUV = input.TextureCoordinates;
-    float dist = distance(inputUV, WaveCenter);
-    float scaleDiff;
+    //float3 color = texCUBE(CubeSampler, input.TextureCoordinates).rgb; // Sample from the cube map using the normal as the direction
 
-    bool distort = ((dist <= ((currentTime) + (WaveParams.z))) && (dist >= ((currentTime) - (WaveParams.z * 0.5))));
+    if (IsBelowGroundLevel(input.WorldPosition.y))
+        discard;
 
-    //Only distort the pixels within the parameter distance from the centre
-    if (distort)
-    {
-        //The pixel offset distance based on the input parameters
-        float diff = (dist - currentTime);
-        scaleDiff = (1.0 - pow(abs(diff * WaveParams.x), WaveParams.y));
-        float diffTime = (diff * scaleDiff);
-        
-        //The direction of the distortion
-        float2 diffTexCoord = normalize(inputUV - WaveCenter);
-        
-        //Perform the distortion and reduce the effect over time
-        inputUV += ((diffTexCoord * diffTime) / (currentTime * dist * 40.0));
-    }
+    if (IsOff())
+        discard;
 
-    float3 viewDirection = normalize(-input.WorldViewPos);
-    float3 normal = input.Normal;
-    float fresnelPow = 1.5;
+    float noise = GetNoiseValue(input.WorldPosition);
+    float originalNoise = noise;
+    float heightThreshold = Height + noise * 0.15;
 
-    if (dot(normal, viewDirection) < 0)
-    {
-        normal = -normal;
-        fresnelPow = 1.0;
-    }
+    // do not draw dissolved pixels and ones above height threshold
+    if (!step(noise, DissolveThreshold) ||
+        input.WorldPosition.y > heightThreshold)
+        discard;
+
+    float3 viewDirection = normalize(-input.WorldViewPosition);
+    float3 normal = normalize(input.Normal);
+
+    // in order to properly see the interior of force field
+    normal = HandleInteriorVisibility(normal, viewDirection);
+
+    float halfHighlightThickness = HighlightThickness / 2.0;
+    float highlightStep = smoothstep(DissolveThreshold - halfHighlightThickness,
+                                     DissolveThreshold + halfHighlightThickness, noise);
+    float3 dissolveHighlightColor = HighlightColor * highlightStep;
+
+    // for visual stains on shield surface
+    noise = step(frac(noise * 12.0), 0.25);
 
     // Fresnel effect for edge glow
-    float fresnel = pow(1.0 - dot(normal, viewDirection), fresnelPow);
+    float fieldStrength = CalculateFieldStrength(normal, viewDirection, noise);
 
-    // Scrolling noise for energy effect
-    float2 gridUV = inputUV + float2(Time * 0.03, Time * 0.03);
-    float3 gridColor = tex2D(GridTextureSampler, gridUV).rgb;
-
-    float2 noiseUV = inputUV - float2(Time * 0.05, Time * 0.05);
-    float3 noiseColor = tex2D(NoiseTextureSampler, noiseUV).rgb;
-
-    float noise = noiseColor.r;
-
-    noise *= (sin(Time * 0.75) + cos(Time * 0.93)) * 1.5;
-
-    // Combine effects
-    float fieldStrength = fresnel * (0.5 + noise * 0.2);
-    float3 color = FieldColor * fieldStrength * GlowIntensity;
-
-    if (gridColor.r < 0.5)
-        color += GridLinesColor * (0.5 + abs(sin(Time * 0.59) + cos(Time * 0.43)) / 2.0);
-
-    fieldStrength *= (1.0 + abs(sin(Time * 0.75) + cos(Time * 0.93))) * 2.0;
-
-    if (distort)
-    {
-        //Blow out the color and reduce the effect over time
-        color += (color * scaleDiff) / (currentTime * dist * 30.0);
-    }
-
-    color = saturate(color);
-    fieldStrength = saturate(fieldStrength);
-
-    // Output final color with transparency
-    return saturate(float4(color, fieldStrength));
+    return CalculateFinalColor(input.WorldPosition.y,
+                               heightThreshold,
+                               highlightStep,
+                               fieldStrength,
+                               dissolveHighlightColor,
+                               noise,
+                               originalNoise);
 }
 
-technique ForceFieldTech
+// --- TECHNIQUES ---
+
+technique ForceFieldTechnique
 {
-    pass P0
+    pass Pass0
     {
-        VertexShader = compile vs_5_0 VS_Main();
-        PixelShader = compile ps_5_0 PS_Main();
+        VertexShader = compile vs_5_0 VertexShaderFunction();
+        PixelShader = compile ps_5_0 PixelShaderFunction();
     }
 }

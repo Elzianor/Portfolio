@@ -28,10 +28,14 @@ public class DrawableSphere : DrawableBasePrimitive
     private readonly List<SphereVertex> _vertices = new();
     private readonly List<int> _indices = new();
 
+    public float Radius { get; }
+
     public DrawableSphere(GraphicsDevice graphicsDevice,
         float radius, int longitudeSegments, int latitudeSegments, float uvCoefficient)
         : base(graphicsDevice)
     {
+        Radius = radius;
+
         Generate(radius, longitudeSegments, latitudeSegments, uvCoefficient);
     }
 

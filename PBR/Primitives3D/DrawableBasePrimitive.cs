@@ -1,6 +1,7 @@
 ﻿using Beryllium.VertexTypes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace Beryllium.Primitives3D
 {
@@ -8,7 +9,19 @@ namespace Beryllium.Primitives3D
     {
         public VertexPositionNormalTangentTexture[] Vertices { get; protected set; }
         public int[] Indices { get; protected set; }
-        public Vector3 Position {get; set; }
+
+        private Vector3 _position;
+        public Vector3 Position
+        {
+            get => _position;
+            set
+            {
+                _position = value;
+                WorldMatrix = Matrix.CreateTranslation(_position);
+            }
+        }
+
+        public Matrix WorldMatrix { get; private set; } = Matrix.Identity;
 
         public virtual void Draw(Effect effect)
         {
