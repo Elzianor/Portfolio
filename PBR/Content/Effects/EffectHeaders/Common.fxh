@@ -190,4 +190,13 @@ float GetMultioctave3DNoiseValue(float x, float y, float z, uint startOctaveNumb
     return outputValue;
 }
 
+// --- SDF SHAPE FUNCTIONS ---
+
+// p - point in space
+// s - sphere radius
+float SdfSphere(float3 p, float s)
+{
+    return length(p) - s;
+}
+
 #endif // COMMON_FXH

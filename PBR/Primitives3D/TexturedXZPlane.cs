@@ -24,9 +24,12 @@ internal class TexturedXZPlane
         set
         {
             _position = value;
-            PositionVertices();
+            WorldMatrix = Matrix.CreateTranslation(_position);
         }
     }
+
+    public Matrix WorldMatrix { get; private set; } = Matrix.Identity;
+
     public Plane Plane { get; }
 
     public TexturedXZPlane(GraphicsDevice graphicsDevice, Point sizeInTiles, float tileSize)
@@ -97,17 +100,5 @@ internal class TexturedXZPlane
 
         _vertices = vertices.ToArray();
         _indices = indices.ToArray();
-    }
-
-    private void PositionVertices()
-    {
-        var translationMatrix = Matrix.CreateTranslation(_position);
-
-        for (var i = 0; i < _vertices.Length; i++)
-        {
-            var vertex = _vertices[i];
-            vertex.Position = Vector3.Transform(vertex.Position, translationMatrix);
-            _vertices[i] = vertex;
-        }
     }
 }

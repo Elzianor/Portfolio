@@ -2,6 +2,7 @@
 #define COMMON_UNIFORMS_FXH
 
 // --- Transform ---
+float4x4 World;
 float4x4 WorldViewProjection;
 float4x4 WorldView;
 float4x4 WorldViewInverseTranspose;

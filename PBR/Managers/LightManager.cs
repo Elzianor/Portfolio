@@ -110,11 +110,12 @@ internal class LightManager
         LightColor = _pbrEffectManager.LightColor;
     }
 
-    public void Update(Camera camera)
+    public void Update(Camera camera, Matrix objectWorldMatrix)
     {
-        _pbrEffectManager.Update(camera);
         _lightSourceEffectManager.Update(camera, _representation.Position);
         _representation.Update(camera);
+
+        _pbrEffectManager.Update(camera, objectWorldMatrix);
     }
 
     public void Draw()

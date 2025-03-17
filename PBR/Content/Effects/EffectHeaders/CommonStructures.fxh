@@ -52,6 +52,7 @@ struct VSOutputPBRSolid
     float4 Position : SV_POSITION;
     float3 Normal : TEXCOORD0;
     float3 WorldViewPosition : TEXCOORD1;
+    float3 WorldPosition : TEXCOORD2;
 };
 
 struct VSOutputPBRTextured
@@ -61,6 +62,8 @@ struct VSOutputPBRTextured
     float3 TangentLightPosition : TEXCOORD1;
     float3 TangentLightDirection : TEXCOORD2;
     float3 TangentPosition : TEXCOORD3;
+    float3 WorldViewPosition : TEXCOORD4;
+    float3 WorldPosition : TEXCOORD5;
     //float3 TangentWorldViewPosition : TEXCOORD3;
     //float3 WorldViewPosition : TEXCOORD1;
     //float3x3 Tbn : TEXCOORD2;

@@ -60,8 +60,7 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
     #endregion
 
     #region Matrices
-    private Matrix _worldViewMatrix;
-    private Matrix _worldViewInverseTransposeMatrix;
+    private Matrix _lightWorldMatrix;
 
     private Matrix _worldMatrix;
     public Matrix WorldMatrix
@@ -82,6 +81,8 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
         {
             _viewMatrix = value;
             RecalculateMatrices();
+            RecalculateLightDirection();
+            RecalculateLightPosition();
         }
     }
 
@@ -93,6 +94,8 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
         {
             _projectionMatrix = value;
             RecalculateMatrices();
+            RecalculateLightDirection();
+            RecalculateLightPosition();
         }
     }
     #endregion
@@ -248,11 +251,15 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
     #endregion
 
     #region Update
-    public void Update(Camera camera)
+    public void Update(Camera camera, Matrix objectWorldMatrix)
     {
-        WorldMatrix = camera.OffsetWorldMatrix;
+        WorldMatrix = objectWorldMatrix * camera.OffsetWorldMatrix;
         ViewMatrix = camera.ViewMatrix;
         ProjectionMatrix = camera.ProjectionMatrix;
+
+        _lightWorldMatrix = camera.OffsetWorldMatrix;
+        RecalculateLightDirection();
+        RecalculateLightPosition();
     }
     #endregion
 
@@ -260,15 +267,12 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
     private void RecalculateMatrices()
     {
         var wvp = _worldMatrix * _viewMatrix * _projectionMatrix;
-        _worldViewMatrix = _worldMatrix * _viewMatrix;
-        _worldViewInverseTransposeMatrix = Matrix.Transpose(Matrix.Invert(_worldViewMatrix));
+        var wv = _worldMatrix * _viewMatrix;
+        var wvit = Matrix.Transpose(Matrix.Invert(wv));
 
         Effect.Parameters["WorldViewProjection"].SetValue(wvp);
-        Effect.Parameters["WorldView"].SetValue(_worldViewMatrix);
-        Effect.Parameters["WorldViewInverseTranspose"].SetValue(_worldViewInverseTransposeMatrix);
-
-        RecalculateLightDirection();
-        RecalculateLightPosition();
+        Effect.Parameters["WorldView"].SetValue(wv);
+        Effect.Parameters["WorldViewInverseTranspose"].SetValue(wvit);
     }
 
     private void RecalculateLightColor()
@@ -278,7 +282,10 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
 
     private void RecalculateLightDirection()
     {
-        var ld = Vector3.TransformNormal(_lightDirection, _worldViewInverseTransposeMatrix);
+        var wv = _lightWorldMatrix * _viewMatrix;
+        var wvit = Matrix.Transpose(Matrix.Invert(wv));
+
+        var ld = Vector3.TransformNormal(_lightDirection, wvit);
         ld.Normalize();
 
         Effect.Parameters["WorldViewLightDirection"].SetValue(ld);
@@ -286,7 +293,9 @@ internal class PbrEffectManager(ContentManager contentManager, string effectPath
 
     private void RecalculateLightPosition()
     {
-        var lp = Vector3.Transform(_lightPosition, _worldViewMatrix);
+        var wv = _lightWorldMatrix * _viewMatrix;
+
+        var lp = Vector3.Transform(_lightPosition, wv);
 
         Effect.Parameters["WorldViewLightPosition"].SetValue(lp);
     }

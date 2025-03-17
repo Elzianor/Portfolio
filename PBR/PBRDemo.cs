@@ -12,6 +12,8 @@ using PBR.Managers;
 using PBR.Utils;
 using System;
 using PBR.Managers.EffectManagers;
+using PBR.Primitives3D;
+using System.Linq;
 
 namespace PBR;
 
@@ -35,6 +37,9 @@ public class PBRDemo : Game
 
     private ForceField _forceField;
 
+    private RenderTarget2D _sceneRenderTarget;
+    private DrawableCube _cube;
+
     private CoordinateAxes _coordinateAxes;
 
     public PBRDemo()
@@ -43,20 +48,18 @@ public class PBRDemo : Game
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.GraphicsProfile = GraphicsProfile.HiDef;
-        _graphics.PreferredBackBufferWidth = screenBounds.Width;
-        _graphics.PreferredBackBufferHeight = screenBounds.Height;
+        _graphics.PreferredBackBufferWidth = /*screenBounds.Width*/1600;
+        _graphics.PreferredBackBufferHeight = /*screenBounds.Height*/1200;
         _graphics.PreferredDepthStencilFormat = DepthFormat.Depth24;
         _graphics.SynchronizeWithVerticalRetrace = false;
         _graphics.ApplyChanges();
-
-        _graphics.DeviceReset += GraphicsDeviceResetHandler;
-
         Content.RootDirectory = "Content";
         Window.AllowUserResizing = true;
         Window.IsBorderless = false;
         Window.Position = Point.Zero;
         IsMouseVisible = true;
         IsFixedTimeStep = false;
+        Window.ClientSizeChanged += WindowClientSizeChangedHandler;
     }
 
     protected override void Initialize()
@@ -80,6 +83,24 @@ public class PBRDemo : Game
         //TextureCube cubeMap = CreateCubMapTexture();
         //_cubeMapEffect.Parameters["CubeSampler"].SetValue(cubeMap);
 
+        _cube = new DrawableCube(GraphicsDevice, 1.5f)
+        {
+            Position = new Vector3(0.0f, 2.0f, 0.0f)
+        };
+
+        var pt = Perlin3D.PermutationTable.Select(ptEntry => (int)ptEntry).ToArray();
+        var gs = Perlin3D.GradientSet.Select(vec => new Vector3(vec.X, vec.Y, vec.Z)).ToArray();
+
+        _pbrEffectManager.Effect.Parameters["mX"].SetValue(Perlin3D.MX);
+        _pbrEffectManager.Effect.Parameters["mY"].SetValue(Perlin3D.MY);
+        _pbrEffectManager.Effect.Parameters["mZ"].SetValue(Perlin3D.MZ);
+        _pbrEffectManager.Effect.Parameters["permutationTable"].SetValue(pt);
+        _pbrEffectManager.Effect.Parameters["gradientSet"].SetValue(gs);
+
+        _sceneRenderTarget = new RenderTarget2D(GraphicsDevice,
+            GraphicsDevice.PresentationParameters.BackBufferWidth,
+            GraphicsDevice.PresentationParameters.BackBufferHeight);
+
         base.Initialize();
     }
 
@@ -92,7 +113,7 @@ public class PBRDemo : Game
 
     protected override void UnloadContent()
     {
-        _graphics.DeviceReset -= GraphicsDeviceResetHandler;
+        Window.ClientSizeChanged -= WindowClientSizeChangedHandler;
     }
 
     protected override void Update(GameTime gameTime)
@@ -112,7 +133,11 @@ public class PBRDemo : Game
 
         _forceField.Update(gameTime, _camera);
 
-        _lightManager.Update(_camera);
+        _pbrEffectManager.Effect.Parameters["ForceFieldPosition"].SetValue(_forceField.Position);
+        _pbrEffectManager.Effect.Parameters["ForceFieldRadius"].SetValue(_forceField.Radius);
+        _pbrEffectManager.Effect.Parameters["ForceFieldHighlightColor"].SetValue(_forceField.HighlightColor);
+        _pbrEffectManager.Effect.Parameters["ForceFieldHeight"].SetValue(_forceField.Height);
+        _pbrEffectManager.Effect.Parameters["Time"].SetValue(_forceField.Time);
 
         _coordinateAxes.Update(_camera);
 
@@ -121,16 +146,17 @@ public class PBRDemo : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        GraphicsDevice.SetRenderTarget(_sceneRenderTarget);
         GraphicsDevice.Clear(_background);
 
-        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-        GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+        RenderScene();
 
-        _pbrEffectManager.ApplyTechnique("Textured").ApplyPass();
-        _texturedXZPlane.Draw(_pbrEffectManager.Effect);
-        _lightManager.Draw();
+        GraphicsDevice.SetRenderTarget(null);
+        GraphicsDevice.Clear(_background);
 
+        RenderScene();
+
+        _forceField.Effect.Parameters["SceneTextureSampler"].SetValue(_sceneRenderTarget);
         _forceField.Draw(GraphicsDevice);
 
         //_coordinateAxes.Draw();
@@ -146,6 +172,24 @@ public class PBRDemo : Game
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void RenderScene()
+    {
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+        GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+
+        _lightManager.Update(_camera, _texturedXZPlane.WorldMatrix);
+        _pbrEffectManager.Effect.Parameters["World"].SetValue(_texturedXZPlane.WorldMatrix);
+        _pbrEffectManager.ApplyTechnique("TexturedFFInteraction").ApplyPass();
+        _texturedXZPlane.Draw(_pbrEffectManager.Effect);
+        _lightManager.Draw();
+
+        _lightManager.Update(_camera, _cube.WorldMatrix);
+        _pbrEffectManager.Effect.Parameters["World"].SetValue(_cube.WorldMatrix);
+        _pbrEffectManager.ApplyTechnique("SolidFFInteraction").ApplyPass();
+        _cube.Draw(_pbrEffectManager.Effect);
     }
 
     private void HandleCameraInput()
@@ -208,9 +252,22 @@ public class PBRDemo : Game
 
             if (rayPlaneIntersectionPoint != null)
             {
-                _lightManager.LightPosition = new Vector3(rayPlaneIntersectionPoint.Value.X,
-                    1,
-                    rayPlaneIntersectionPoint.Value.Z);
+                if (KeyboardManager.IsKeyDown(Keys.J))
+                {
+                    _forceField.Position = rayPlaneIntersectionPoint.Value;
+                }
+                else if (KeyboardManager.IsKeyDown(Keys.K))
+                {
+                    _cube.Position = new Vector3(rayPlaneIntersectionPoint.Value.X,
+                        2,
+                        rayPlaneIntersectionPoint.Value.Z);
+                }
+                else
+                {
+                    _lightManager.LightPosition = new Vector3(rayPlaneIntersectionPoint.Value.X,
+                        1,
+                        rayPlaneIntersectionPoint.Value.Z);
+                }
             }
         }
     }
@@ -268,7 +325,7 @@ public class PBRDemo : Game
     {
         var materialFolder = "WoodFloor";
 
-        _pbrEffectManager = new PbrEffectManager(Content, @"Effects\PBR")
+        _pbrEffectManager = new PbrEffectManager(Content, @"Effects\ForceFieldInteraction")
         {
             Material = new Material(materialFolder)
             {
@@ -286,18 +343,14 @@ public class PBRDemo : Game
                     ParallaxMaxSteps = 0,
                     ParallaxHeightScale = 0.0f,
                 },
+                SolidColorProperties = new SolidColorProperties
+                {
+                    DiffuseColor = Color.Coral.ToVector3(),
+                    Metallic = 0.1f,
+                    Roughness = 0.8f
+                },
                 BaseReflectivity = 0.04f
             },
-            //Material = new Material("Solid")
-            //{
-            //    SolidColorProperties = new SolidColorProperties
-            //    {
-            //        DiffuseColor = Color.Coral.ToVector3(),
-            //        Metallic = 0.1f,
-            //        Roughness = 0.8f
-            //    },
-            //    BaseReflectivity = 0.04f
-            //},
             Gamma = 2.2f,
             ApplyGammaCorrection = true
         };
@@ -345,7 +398,7 @@ public class PBRDemo : Game
 
         _forceField = new ForceField(forceFieldSphere, forceFieldEffectManager, 100.0f)
         {
-            IsOn = false
+            IsOn = true
         };
     }
 
@@ -362,16 +415,17 @@ public class PBRDemo : Game
     #endregion
 
     #region Misc
-    private void GraphicsDeviceResetHandler(object sender, EventArgs e)
+    private void WindowClientSizeChangedHandler(object sender, EventArgs e)
     {
-        //_hdrRenderTarget = new RenderTarget2D(GraphicsDevice,
-        //    GraphicsDevice.PresentationParameters.BackBufferWidth,
-        //    GraphicsDevice.PresentationParameters.BackBufferHeight,
-        //    false,
-        //    SurfaceFormat.HdrBlendable,
-        //    DepthFormat.Depth24Stencil8,
-        //    0,
-        //    RenderTargetUsage.DiscardContents);
+        var newWidth = Window.ClientBounds.Width;
+        var newHeight = Window.ClientBounds.Height;
+
+        _graphics.PreferredBackBufferWidth = newWidth;
+        _graphics.PreferredBackBufferHeight = newHeight;
+        _graphics.ApplyChanges();
+
+        _camera.ViewPortWidth = newWidth;
+        _camera.ViewPortHeight = newHeight;
     }
 
     private TextureCube CreateCubMapTexture()

@@ -14,6 +14,11 @@ public class ForceField
 
     public bool IsOn { get; set; }
     public Vector3 Position { get => _representation.Position; set => _representation.Position = value; }
+    public float Radius => _representation.Radius;
+    public Vector3 HighlightColor => _effectManager.HighlightColor;
+    public float Height => _effectManager.Height;
+    public float Time => _effectManager.Time;
+    public Effect Effect => _effectManager.Effect;
 
     public float MaxCapacity { get; set; }
 
@@ -34,6 +39,7 @@ public class ForceField
         _effectManager = effectManager;
         MaxCapacity = maxCapacity;
         Capacity = maxCapacity;
+        _effectManager.Height = -(_representation.Radius + 1.0f); // 1.0f is maximum additional noise height
     }
 
     public void Update(GameTime gameTime, Camera camera)
@@ -71,9 +77,9 @@ public class ForceField
         }
         else
         {
-            if (_effectManager.Height <= 0.0) return;
+            if (_effectManager.Height <= -(_representation.Radius + 1.0f)) return;
 
-            _effectManager.Height = Math.Max(_effectManager.Height - elapsedSeconds * 1.5f, 0.0f);
+            _effectManager.Height = Math.Max(_effectManager.Height - elapsedSeconds * 1.5f, -(_representation.Radius + 1.0f));
         }
     }
 

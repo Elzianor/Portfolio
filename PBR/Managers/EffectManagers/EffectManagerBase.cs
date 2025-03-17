@@ -5,7 +5,7 @@ namespace PBR.EffectManagers;
 
 public abstract class EffectManagerBase
 {
-    public Effect Effect { get; }
+    public Effect Effect { get; set; }
 
     protected EffectManagerBase(ContentManager contentManager, string effectPath)
     {

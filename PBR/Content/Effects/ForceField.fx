@@ -3,6 +3,8 @@
 // --- UNIFORMS ---
 //samplerCUBE CubeSampler;
 
+sampler2D SceneTextureSampler;
+
 float4x4 World;
 float4x4 WorldViewProjection;
 float4x4 WorldView;
@@ -40,11 +42,6 @@ float GetNoiseValue(float3 position)
     true);
 }
 
-bool IsBelowGroundLevel(float positionY)
-{
-    return positionY < 0.0;
-}
-
 bool IsOff()
 {
     return DissolveThreshold == 0.0 || Height == 0.0;
@@ -74,7 +71,8 @@ float3 CalculateBaseColor(float fieldStrength)
     return color;
 }
 
-float4 CalculateFinalColor(float3 position,
+float4 CalculateFinalColor(float4 scenePosition,
+                           float3 worldPosition,
                            float heightThreshold,
                            float highlightStep,
                            float fieldStrength,
@@ -86,8 +84,7 @@ float4 CalculateFinalColor(float3 position,
     float alpha;
 
     // draw highlights
-    if (position.y <= HighlightThickness * 2.0 ||
-        position.y > heightThreshold - HighlightThickness ||
+    if (worldPosition.y > heightThreshold - HighlightThickness ||
         highlightStep > 0.0)
     {
         color = HighlightColor;
@@ -117,6 +114,16 @@ float4 CalculateFinalColor(float3 position,
             color = lerp(color, LowCapacityColor, abs(sin(Time * 0.75)) * 0.2);
             alpha += abs(sin(Time * 0.75)) * 0.2;
         }
+
+        float2 ndcUV = scenePosition.xy / scenePosition.w * 0.5 + 0.5;
+        ndcUV.y = 1.0 - ndcUV.y;
+
+        ndcUV += (originalNoise * 2.0 - 1.0) * 0.0075;
+
+        float4 sceneColor = tex2D(SceneTextureSampler, ndcUV);
+
+        color = lerp(color, sceneColor.rgb, 1.0 - alpha);
+        alpha = 1.0;
     }
 
     return saturate(float4(color, alpha));
@@ -137,6 +144,7 @@ struct VertexShaderOutput
     float3 WorldViewPosition : TEXCOORD1;
     float3 TextureCoordinates : TEXCOORD2;
     float3 WorldPosition : TEXCOORD3;
+    float4 ClipPosition : TEXCOORD4;
 };
 
 // --- SHADERS ---
@@ -145,11 +153,12 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
     VertexShaderOutput output;
 
-    output.Position = mul(input.Position, WorldViewProjection);
+    output.ClipPosition = mul(input.Position, WorldViewProjection);
     output.Normal = normalize(mul(input.Normal, (float3x3)WorldViewInverseTranspose));
     output.WorldViewPosition = mul(input.Position, WorldView).xyz;
     output.TextureCoordinates = normalize(input.Normal);
     output.WorldPosition = mul(input.Position, World).xyz;
+    output.Position = output.ClipPosition;
 
     return output;
 }
@@ -157,9 +166,6 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 float4 PixelShaderFunction(VertexShaderOutput input) : SV_Target
 {
     //float3 color = texCUBE(CubeSampler, input.TextureCoordinates).rgb; // Sample from the cube map using the normal as the direction
-
-    if (IsBelowGroundLevel(input.WorldPosition.y))
-        discard;
 
     if (IsOff())
         discard;
@@ -190,7 +196,8 @@ float4 PixelShaderFunction(VertexShaderOutput input) : SV_Target
     // Fresnel effect for edge glow
     float fieldStrength = CalculateFieldStrength(normal, viewDirection, noise);
 
-    return CalculateFinalColor(input.WorldPosition.y,
+    return CalculateFinalColor(input.ClipPosition,
+                               input.WorldPosition.y,
                                heightThreshold,
                                highlightStep,
                                fieldStrength,

@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/ForceField.fx
 
+#begin Effects/ForceFieldInteraction.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/ForceFieldInteraction.fx
+
 #begin Effects/LightSource.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -36,6 +42,12 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Effects/PBR.fx
+
+#begin Effects/TestEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/TestEffect.fx
 
 #begin Flags/Brazil.jpg
 /importer:TextureImporter

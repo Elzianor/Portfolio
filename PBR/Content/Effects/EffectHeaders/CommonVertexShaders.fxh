@@ -12,6 +12,7 @@ VSOutputPBRSolid VS_PBR_Solid(VSInputPBR input)
     output.Position = mul(input.Position, WorldViewProjection);
     output.Normal = normalize(mul(input.Normal, (float3x3) WorldViewInverseTranspose));
     output.WorldViewPosition = mul(input.Position, WorldView).xyz;
+    output.WorldPosition = mul(input.Position, World).xyz;
 
     return output;
 }
@@ -54,6 +55,8 @@ VSOutputPBRTextured VS_PBR_Textured(VSInputPBR input)
     }
 
     output.TangentPosition = mul(worldViewPosition, inverseTbn);
+    output.WorldViewPosition = worldViewPosition;
+    output.WorldPosition = mul(input.Position, World).xyz;
 
     return output;
 }

@@ -7,6 +7,8 @@ namespace Beryllium.Primitives3D
 {
     public abstract class DrawableBasePrimitive(GraphicsDevice graphicsDevice)
     {
+        protected GraphicsDevice GraphicsDevice => graphicsDevice;
+
         public VertexPositionNormalTangentTexture[] Vertices { get; protected set; }
         public int[] Indices { get; protected set; }
 
@@ -29,7 +31,7 @@ namespace Beryllium.Primitives3D
             {
                 pass.Apply();
 
-                graphicsDevice.DrawUserIndexedPrimitives(
+                GraphicsDevice.DrawUserIndexedPrimitives(
                     PrimitiveType.TriangleList,
                     Vertices,
                     0,

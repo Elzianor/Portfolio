@@ -35,6 +35,8 @@ internal class LightSourceRepresentation
         }
     }
 
+    public Matrix WorldMatrix => _representation.WorldMatrix;
+
     public LightSourceRepresentation(GraphicsDevice graphicsDevice, DrawableBasePrimitive representation)
     {
         _graphicsDevice = graphicsDevice;
